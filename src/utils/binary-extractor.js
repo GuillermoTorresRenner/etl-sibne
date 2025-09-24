@@ -27,8 +27,7 @@ const sqlConfig = {
 };
 
 // Configuración de rutas desde variables de entorno
-const BINARY_EXTRACTION_PATH =
-  process.env.BINARY_EXTRACTION_PATH || "Archivos";
+const BINARY_EXTRACTION_PATH = process.env.BINARY_EXTRACTION_PATH || "Archivos";
 
 /**
  * Extrae archivos binarios de SQL Server y los guarda con nombres nanoid

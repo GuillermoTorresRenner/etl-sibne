@@ -2,9 +2,9 @@
 
 ## 📋 Descripción del Proyecto
 
-| Sistema integral        | Script                             | Propósito                           | Comando                                                                                                             |
-| ----------------------- | ---------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| **ETL Principal**       | Migra 40 tablas + reporte auto     | `node src/index.js`                 |
+| Sistema integral        | Script                             | Propósito                                       | Comando                                                                                                             |
+| ----------------------- | ---------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **ETL Principal**       | Migra 40 tablas + reporte auto     | `node src/index.js`                             |
 | **Extracción Binaria**  | Extrae archivos con nanoid         | `node src/scripts/extract-binaries.js`          |
 | **Migración Metadatos** | Migra info archivos + reporte auto | `node src/scripts/migrate-archivo-adjunto.js`   |
 | **Reporte Manual**      | Regenerar reporte (opcional)       | `node src/scripts/generate-migration-report.js` | a **migración completa de datos y archivos** de SIBNE Legacy desde **SQL Server** hacia **PostgreSQL**, incluyendo: |
@@ -100,9 +100,9 @@ etl-sibne/
 
 ### 🎯 **Scripts de Ejecución Disponibles**
 
-| Script                  | Propósito                      | Comando                             |
-| ----------------------- | ------------------------------ | ----------------------------------- |
-| **ETL Principal**       | Migra 40 tablas SQL→PostgreSQL | `node src/index.js`                 |
+| Script                  | Propósito                      | Comando                                         |
+| ----------------------- | ------------------------------ | ----------------------------------------------- |
+| **ETL Principal**       | Migra 40 tablas SQL→PostgreSQL | `node src/index.js`                             |
 | **Extracción Binaria**  | Extrae archivos con nanoid     | `node src/scripts/extract-binaries.js`          |
 | **Migración Metadatos** | Migra info de archivos         | `node src/scripts/migrate-archivo-adjunto.js`   |
 | **Reporte Final**       | Genera reporte completo        | `node src/scripts/generate-migration-report.js` |

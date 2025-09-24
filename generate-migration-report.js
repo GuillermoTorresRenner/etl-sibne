@@ -3,7 +3,6 @@
 import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
-import "dotenv/config";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,8 +13,7 @@ const __dirname = path.dirname(__filename);
  */
 class MigrationReportGenerator {
   constructor() {
-    this.projectRoot = path.resolve(__dirname, "../..");
-    this.extractPath = process.env.BINARY_EXTRACTION_PATH || "Archivos";
+    this.projectRoot = __dirname;
     this.reportData = {
       timestamp: new Date().toISOString(),
       date: new Date().toLocaleDateString("es-ES", {
@@ -116,13 +114,9 @@ class MigrationReportGenerator {
    */
   async analyzeBinaryFiles() {
     try {
-      const extractedFilesPath = path.join(
-        this.projectRoot,
-        this.extractPath.replace("./", "")
-      );
+      const extractedFilesPath = path.join(this.projectRoot, "extracted_files");
       const manifestPath = path.join(
         this.projectRoot,
-        "Reportes",
         "extracted-files-report.json"
       );
 
@@ -282,7 +276,7 @@ ${
 ### 📊 Estadísticas de Archivos
 - **Total:** ${binaryData.totalFiles} archivos
 - **Tamaño:** ${binaryData.totalSize}
-- **Ubicación:** \`./${this.extractPath}/\`
+- **Ubicación:** \`./extracted_files/\`
 - **Formato:** fecha_nanoid.extensión
 
 </div>
@@ -343,14 +337,14 @@ ${
 
 **🔴 ACCIÓN REQUERIDA:** Los archivos binarios extraídos deben ser migrados manualmente al backend:
 
-1. **Copiar archivos** desde \`./${this.extractPath}/\` 
+1. **Copiar archivos** desde \`./extracted_files/\` 
 2. **Pegar en** la carpeta \`uploads/\` del proyecto backend
 3. **Verificar** que la estructura de carpetas sea correcta
 4. **Validar** que los nombres de archivo coincidan con la base de datos
 
 **Comando sugerido:**
 \`\`\`bash
-cp ./${this.extractPath}/*.* ../sibne-backend/uploads/
+cp ./extracted_files/*.* ../sibne-backend/uploads/
 \`\`\`
 
 </div>
@@ -370,12 +364,8 @@ cp ./${this.extractPath}/*.* ../sibne-backend/uploads/
 ### 📄 Archivos Generados
 - \`./logs/etl-combined.log\` - Log completo de migración
 - \`./logs/etl-errors.log\` - Errores detectados
-- \`./${
-      this.extractPath
-    }/dbo.ArchivoAdjunto_manifest.json\` - Manifiesto de archivos
-- \`./${
-      this.extractPath
-    }/dbo.ArchivoAdjunto_migration.sql\` - Script SQL de migración
+- \`./extracted_files/dbo.ArchivoAdjunto_manifest.json\` - Manifiesto de archivos
+- \`./extracted_files/dbo.ArchivoAdjunto_migration.sql\` - Script SQL de migración
 
 ### 🔧 Scripts Disponibles
 - \`extract-binaries.js\` - Extracción de archivos binarios
@@ -410,9 +400,7 @@ La base de datos PostgreSQL está lista para ser utilizada por el backend.
 </div>`;
 
     // Guardar el reporte
-    const reportsDir = path.join(this.projectRoot, "Reportes");
-    await fs.mkdir(reportsDir, { recursive: true });
-    const reportPath = path.join(reportsDir, "MIGRATION_REPORT.md");
+    const reportPath = path.join(this.projectRoot, "MIGRATION_REPORT.md");
     await fs.writeFile(reportPath, report, "utf-8");
 
     console.log("✅ Reporte generado exitosamente:");

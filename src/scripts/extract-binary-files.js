@@ -23,10 +23,7 @@ async function extractBinaryFiles() {
 
     // Crear extractor de binarios
     const extractPath = process.env.BINARY_EXTRACTION_PATH || "Archivos";
-    binaryExtractor = new BinaryExtractor(
-      sqlExtractor.pool,
-      extractPath
-    );
+    binaryExtractor = new BinaryExtractor(sqlExtractor.pool, extractPath);
 
     // Extraer archivos de ArchivoAdjunto
     logger.info("📁 Extrayendo archivos de dbo.ArchivoAdjunto...");
