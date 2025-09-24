@@ -1,0 +1,3 @@
+# Esta carpeta contiene los logs del proceso ETL
+# Los archivos de log son ignorados por git
+# Aquí se almacenarán los logs de importación, exportación y procesamiento
