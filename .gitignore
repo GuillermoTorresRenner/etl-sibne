@@ -1,0 +1,262 @@
+# =====================================
+# ETL SIBNE - Node.js Project
+# =====================================
+
+# Node.js dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Grunt intermediate storage
+.grunt
+
+# Bower dependency directory
+bower_components
+
+# node-waf configuration
+.lock-wscript
+
+# Compiled binary addons
+build/Release
+
+# Dependency directories
+jspm_packages/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variable files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# parcel-bundler cache
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+out
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Gatsby files
+.cache/
+public
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Temporary folders
+tmp/
+temp/
+
+# =====================================
+# SQL Server & Database Files
+# =====================================
+
+# Excluir TODO el contenido de la carpeta Backup (archivos .bak)
+Backup/*
+!Backup/.gitkeep
+
+# Archivos de base de datos locales
+*.mdf
+*.ldf
+*.bak
+*.trn
+*.dmp
+
+# =====================================
+# ETL Data Files
+# =====================================
+
+# Excluir TODO el contenido de la carpeta Tablas (archivos CSV exportados)
+Tablas/*
+!Tablas/.gitkeep
+
+# Archivos de datos temporales
+*.csv
+*.xlsx
+*.xls
+*.json.tmp
+*.xml.tmp
+
+# Logs de ETL
+logs/
+*.log
+etl-*.log
+import-*.log
+export-*.log
+
+# =====================================
+# Docker & Desarrollo
+# =====================================
+
+# Docker compose override
+docker-compose.override.yml
+
+# Volumes de desarrollo local
+volumes/
+
+# =====================================
+# IDE & Editores
+# =====================================
+
+# Visual Studio Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# =====================================
+# Sistema Operativo
+# =====================================
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# =====================================
+# Archivos de Configuración Sensibles
+# =====================================
+
+# Archivos de configuración con credenciales
+config/production.json
+config/local.json
+.env.production
+secrets.json
+credentials.json
+
+# Certificados y llaves
+*.pem
+*.key
+*.crt
+*.cert
+*.p12
+*.pfx
+
+# =====================================
+# Archivos de Backup y Temporales
+# =====================================
+
+# Backups automáticos
+*.backup
+*.old
+*.orig
+*.save
+*.tmp
+
+# Archivos temporales de Office
+~$*.docx
+~$*.xlsx
+~$*.pptx
+
+# =====================================
+# Comentarios de Ayuda
+# =====================================
+
+# NOTA: Si necesitas agregar un archivo específico que está siendo ignorado, usa:
+# git add -f archivo_especifico.ext
+
+# NOTA: Para ver qué archivos están siendo ignorados:
+# git status --ignored

@@ -1,0 +1,46 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver-etl-sibne
+    hostname: sqlserver
+    user: "0:0"  # Ejecutar como root para evitar problemas de permisos
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${SA_PASSWORD}
+      - MSSQL_PID=Express
+    ports:
+      - "${SQL_PORT:-1433}:1433"
+    volumes:
+      # Volumen para persistencia de datos
+      - sqlserver_data:/var/opt/mssql/data
+      # Volumen para logs
+      - sqlserver_logs:/var/opt/mssql/log
+      # Volumen para backups - mapea la carpeta local Backup
+      - ./Backup:/var/opt/mssql/backup
+      # Script de inicialización (opcional)
+      - ./scripts:/var/opt/mssql/scripts
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P '${SA_PASSWORD}' -Q 'SELECT 1' -C || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - sqlserver_network
+
+volumes:
+  # Volumen para persistencia de datos de SQL Server
+  sqlserver_data:
+    driver: local
+  # Volumen para logs de SQL Server
+  sqlserver_logs:
+    driver: local
+
+networks:
+  sqlserver_network:
+    driver: bridge

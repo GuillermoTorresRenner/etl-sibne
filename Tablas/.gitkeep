@@ -1,0 +1,4 @@
+# Esta carpeta contiene los archivos CSV exportados del ETL
+# Los archivos CSV son ignorados por git debido a que pueden ser muy grandes
+# y contener datos sensibles
+# Aquí se exportarán las tablas procesadas por el ETL de Node.js

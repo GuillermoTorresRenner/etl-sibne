@@ -1,0 +1,3 @@
+# Esta carpeta contiene los archivos de backup (.bak) de SQL Server
+# Los archivos .bak son ignorados por git debido a su tamaño
+# Coloca aquí tus archivos de backup para que sean accesibles por el contenedor Docker

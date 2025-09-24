@@ -1,0 +1,11 @@
+{
+  "name": "etl-sibne",
+  "version": "1.0.0",
+  "description": "An ETL Software for migrations SIBNES's Databases",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Guillermo Torres Renner",
+  "license": "MIT"
+}
