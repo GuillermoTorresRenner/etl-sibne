@@ -63,6 +63,14 @@ temp/
 *.png
 *.gif
 *.doc
+
+# Reportes temporales de extracción
+extracted-files-report.json
+*-files-report.json
+
+# Carpeta de reportes (contenido temporal, estructura se mantiene)
+Reportes/*
+!Reportes/.gitkeep
 *.docx
 *.xls
 *.xlsx

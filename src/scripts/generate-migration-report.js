@@ -13,7 +13,7 @@ const __dirname = path.dirname(__filename);
  */
 class MigrationReportGenerator {
   constructor() {
-    this.projectRoot = __dirname;
+    this.projectRoot = path.resolve(__dirname, "../..");
     this.reportData = {
       timestamp: new Date().toISOString(),
       date: new Date().toLocaleDateString("es-ES", {
@@ -117,6 +117,7 @@ class MigrationReportGenerator {
       const extractedFilesPath = path.join(this.projectRoot, "extracted_files");
       const manifestPath = path.join(
         this.projectRoot,
+        "Reportes",
         "extracted-files-report.json"
       );
 

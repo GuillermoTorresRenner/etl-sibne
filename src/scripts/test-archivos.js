@@ -1,4 +1,4 @@
-import { ETLPipeline } from "./src/etl-pipeline.js";
+import { ETLPipeline } from "../etl-pipeline.js";
 
 async function testArchivoAdjunto() {
   const pipeline = new ETLPipeline();

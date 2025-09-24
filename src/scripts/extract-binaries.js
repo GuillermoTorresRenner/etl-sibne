@@ -1,4 +1,4 @@
-import { BinaryExtractor } from "./src/utils/binary-extractor.js";
+import { BinaryExtractor } from "../utils/binary-extractor.js";
 import fs from "fs/promises";
 import path from "path";
 
@@ -22,7 +22,7 @@ async function main() {
     extractor.generateExtractionReport(extractedFiles);
 
     // Guardar información de archivos extraídos para el ETL
-    const reportPath = path.join(process.cwd(), "extracted-files-report.json");
+    const reportPath = path.join(process.cwd(), "Reportes", "extracted-files-report.json");
     await fs.writeFile(reportPath, JSON.stringify(extractedFiles, null, 2));
     console.log(`📄 Reporte guardado en: ${reportPath}`);
 

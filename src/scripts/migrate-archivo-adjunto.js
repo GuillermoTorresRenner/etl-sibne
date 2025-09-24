@@ -48,6 +48,7 @@ class ArchivoAdjuntoMigrator {
     try {
       const reportPath = path.join(
         process.cwd(),
+        "Reportes",
         "extracted-files-report.json"
       );
       const reportData = await fs.readFile(reportPath, "utf8");

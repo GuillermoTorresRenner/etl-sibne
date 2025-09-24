@@ -5,9 +5,9 @@
 | Sistema integral        | Script                             | Propósito                           | Comando                                                                                                             |
 | ----------------------- | ---------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | **ETL Principal**       | Migra 40 tablas + reporte auto     | `node src/index.js`                 |
-| **Extracción Binaria**  | Extrae archivos con nanoid         | `node extract-binaries.js`          |
-| **Migración Metadatos** | Migra info archivos + reporte auto | `node migrate-archivo-adjunto.js`   |
-| **Reporte Manual**      | Regenerar reporte (opcional)       | `node generate-migration-report.js` | a **migración completa de datos y archivos** de SIBNE Legacy desde **SQL Server** hacia **PostgreSQL**, incluyendo: |
+| **Extracción Binaria**  | Extrae archivos con nanoid         | `node src/scripts/extract-binaries.js`          |
+| **Migración Metadatos** | Migra info archivos + reporte auto | `node src/scripts/migrate-archivo-adjunto.js`   |
+| **Reporte Manual**      | Regenerar reporte (opcional)       | `node src/scripts/generate-migration-report.js` | a **migración completa de datos y archivos** de SIBNE Legacy desde **SQL Server** hacia **PostgreSQL**, incluyendo: |
 
 - ✅ **Migración de datos estructurados** (40 tablas)
 - ✅ **Extracción y migración de archivos binarios**
@@ -103,9 +103,9 @@ etl-sibne/
 | Script                  | Propósito                      | Comando                             |
 | ----------------------- | ------------------------------ | ----------------------------------- |
 | **ETL Principal**       | Migra 40 tablas SQL→PostgreSQL | `node src/index.js`                 |
-| **Extracción Binaria**  | Extrae archivos con nanoid     | `node extract-binaries.js`          |
-| **Migración Metadatos** | Migra info de archivos         | `node migrate-archivo-adjunto.js`   |
-| **Reporte Final**       | Genera reporte completo        | `node generate-migration-report.js` |
+| **Extracción Binaria**  | Extrae archivos con nanoid     | `node src/scripts/extract-binaries.js`          |
+| **Migración Metadatos** | Migra info de archivos         | `node src/scripts/migrate-archivo-adjunto.js`   |
+| **Reporte Final**       | Genera reporte completo        | `node src/scripts/generate-migration-report.js` |
 
 ## 🚀 Configuración de SQL Server
 
@@ -610,7 +610,7 @@ Los archivos se extraen con **nomenclatura inteligente**:
 
 ```bash
 # Extraer todos los archivos binarios
-node extract-binaries.js
+node src/scripts/extract-binaries.js
 ```
 
 ### ✅ Qué hace esta fase:
@@ -651,7 +651,7 @@ cat extracted_files/dbo.ArchivoAdjunto_manifest.json | jq '.extractedFiles | len
 
 ```bash
 # Migrar metadatos de archivos a PostgreSQL
-node migrate-archivo-adjunto.js
+node src/scripts/migrate-archivo-adjunto.js
 ```
 
 ### ✅ Qué hace esta fase:
@@ -729,7 +729,7 @@ const path = require("path");
 🎯 **El reporte se genera automáticamente** al finalizar cualquiera de estos procesos:
 
 - ✅ **Migración ETL completa**: `node src/index.js`
-- ✅ **Migración de metadatos**: `node migrate-archivo-adjunto.js`
+- ✅ **Migración de metadatos**: `node src/scripts/migrate-archivo-adjunto.js`
 
 ### 🔧 **Generación Manual (Opcional)**
 
@@ -737,7 +737,7 @@ Si necesitas regenerar el reporte manualmente:
 
 ```bash
 # Generar reporte detallado de toda la migración
-node generate-migration-report.js
+node src/scripts/generate-migration-report.js
 ```
 
 ### ✅ El reporte incluye:
@@ -796,13 +796,13 @@ ls -la MIGRATION_REPORT.md
 ```bash
 # Migración completa paso a paso
 node src/index.js                    # Paso 1: ETL de datos (+ reporte automático)
-node extract-binaries.js             # Paso 2: Extraer binarios
-node migrate-archivo-adjunto.js      # Paso 3: Migrar metadatos (+ reporte automático)
+node src/scripts/extract-binaries.js             # Paso 2: Extraer binarios
+node src/scripts/migrate-archivo-adjunto.js      # Paso 3: Migrar metadatos (+ reporte automático)
 
 # Generación manual de reporte (opcional)
-node generate-migration-report.js    # Regenerar reporte si es necesario# Utilidades adicionales
-node check-schema.js                 # Verificar esquema PostgreSQL
-node test-archivos.js               # Test de archivos
+node src/scripts/generate-migration-report.js    # Regenerar reporte si es necesario# Utilidades adicionales
+node src/scripts/check-schema.js                 # Verificar esquema PostgreSQL
+node src/scripts/test-archivos.js               # Test de archivos
 ```
 
 ### Logs y Debugging
