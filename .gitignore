@@ -54,7 +54,7 @@ jspm_packages/
 # =====================================
 
 # Extracted binary files (PDFs, images, etc.)
-extracted_files/
+Archivos/
 uploads/
 temp/
 *.pdf

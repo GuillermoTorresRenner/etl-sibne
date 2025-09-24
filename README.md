@@ -23,7 +23,7 @@ graph LR
     A[SQL Server] --> B[Extracción Datos]
     A --> C[Extracción Binarios]
     B --> D[PostgreSQL]
-    C --> E[extracted_files/]
+    C --> E[Archivos/]
     E --> F[Backend uploads/]
     D --> G[Reporte Final]
     F --> G
@@ -81,7 +81,7 @@ etl-sibne/
 │
 ├── 📁 DATOS Y ARCHIVOS
 │   ├── Backup/                              # Respaldos SQL Server (.bak)
-│   ├── extracted_files/                     # ⭐ Archivos binarios extraídos
+│   ├── Archivos/                           # ⭐ Archivos binarios extraídos
 │   │   ├── 2025-09-24_nanoid.pdf           # Nomenclatura: fecha_nanoid.ext
 │   │   ├── dbo.ArchivoAdjunto_manifest.json # Manifiesto de archivos
 │   │   └── dbo.ArchivoAdjunto_migration.sql # Script de migración
@@ -559,7 +559,7 @@ DB_NAME=SIBNE_ETL
 
 # Configuración de rutas
 LOGS_PATH=./logs
-BINARY_EXTRACTION_PATH=./extracted_files
+BINARY_EXTRACTION_PATH=./Archivos
 ```
 
 ---
@@ -618,14 +618,14 @@ node src/scripts/extract-binaries.js
 - Conecta a SQL Server y localiza tabla `ArchivoAdjunto`
 - Extrae archivos binarios de campo `VARBINARY(MAX)`
 - Genera nombres únicos: `fecha_nanoid.extensión`
-- Guarda archivos en `./extracted_files/`
+- Guarda archivos en `./Archivos/` (configurable con BINARY_EXTRACTION_PATH)
 - Crea manifiesto JSON con mapeo ID → archivo
 - Genera reporte de extracción
 
 ### 📄 Archivos Generados
 
 ```
-extracted_files/
+Archivos/
 ├── 2025-09-24_nanoid1.pdf           # Archivo extraído
 ├── 2025-09-24_nanoid2.pdf           # Archivo extraído
 ├── ...
@@ -637,10 +637,10 @@ extracted_files/
 
 ```bash
 # Ver archivos extraídos
-ls -la extracted_files/*.pdf
+ls -la Archivos/*.pdf
 
 # Ver estadísticas del manifest
-cat extracted_files/dbo.ArchivoAdjunto_manifest.json | jq '.extractedFiles | length'
+cat Archivos/dbo.ArchivoAdjunto_manifest.json | jq '.extractedFiles | length'
 ```
 
 ---
@@ -689,13 +689,13 @@ Los archivos extraídos **DEBEN** moverse manualmente a la carpeta `uploads/` de
 
 ```bash
 # Opción 1: Copiar todos los archivos
-cp ./extracted_files/*.pdf /ruta/al/backend/uploads/
+cp ./Archivos/*.pdf /ruta/al/backend/uploads/
 
 # Opción 2: Mover archivos (si backend está en carpeta hermana)
-cp ./extracted_files/*.pdf ../sibne-backend/uploads/
+cp ./Archivos/*.pdf ../sibne-backend/uploads/
 
 # Opción 3: Rsync para sincronización avanzada
-rsync -av ./extracted_files/*.pdf /ruta/al/backend/uploads/
+rsync -av ./Archivos/*.pdf /ruta/al/backend/uploads/
 ```
 
 ### � Validar Migración al Backend
@@ -815,7 +815,7 @@ tail -f logs/etl-combined.log
 grep -i "binary" logs/etl-combined.log
 
 # Ver estadísticas de archivos
-cat extracted_files/dbo.ArchivoAdjunto_manifest.json | jq '.stats'
+cat Archivos/dbo.ArchivoAdjunto_manifest.json | jq '.stats'
 ```
 
 ---

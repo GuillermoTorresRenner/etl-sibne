@@ -22,9 +22,10 @@ async function extractBinaryFiles() {
     await sqlExtractor.connect();
 
     // Crear extractor de binarios
+    const extractPath = process.env.BINARY_EXTRACTION_PATH || "Archivos";
     binaryExtractor = new BinaryExtractor(
       sqlExtractor.pool,
-      "./extracted_files"
+      extractPath
     );
 
     // Extraer archivos de ArchivoAdjunto
@@ -64,7 +65,7 @@ async function extractBinaryFiles() {
     logger.info(`📋 Manifest: ${manifest}`);
     logger.info("");
     logger.info("🔄 PRÓXIMOS PASOS:");
-    logger.info("1. Revisar archivos extraídos en ./extracted_files/");
+    logger.info(`1. Revisar archivos extraídos en ./${extractPath}/`);
     logger.info("2. Configurar storage en el nuevo backend (S3/Azure/Local)");
     logger.info("3. Ejecutar script SQL para crear tabla sin binarios");
     logger.info("4. Implementar endpoints de upload/download con Multer");

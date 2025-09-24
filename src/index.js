@@ -3,7 +3,7 @@
 import { ETLPipeline } from "./etl-pipeline.js";
 import { logger } from "./utils/logger.js";
 import { config } from "./config/database.js";
-import MigrationReportGenerator from "../generate-migration-report.js";
+import MigrationReportGenerator from "./scripts/generate-migration-report.js";
 import { spawn } from "child_process";
 import { promisify } from "util";
 import path from "path";
