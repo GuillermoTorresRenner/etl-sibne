@@ -1,8 +1,20 @@
-# ETL SIBNE - Entorno SQL Server
+# ETL SIBNE - Migración de SQL Server a PostgreSQL
 
 ## 📋 Descripción del Proyecto
 
-Este proyecto proporciona un entorno completo de SQL Server utilizando Docker Compose, diseñado para facilitar el desarrollo y la gestión de bases de datos con persistencia de datos y restauración automática de backups.
+Este proyecto se centra en la realización de **migraciones de datos** entre la base de datos SIBNE Legacy, la cual se encuentra en **SQL Server** hacia una base de datos optimizada realizada en **PostgreSQL**. El objetivo principal es extraer, transformar y cargar (ETL) los datos de manera eficiente y segura, asegurando la integridad y consistencia de la información durante todo el proceso.
+
+### 🎯 Fases del Proyecto
+
+1. **Conexión a SQL Server** - Configuración del entorno de base de datos de origen
+2. **Conexión a PostgreSQL** - Configuración del entorno de base de datos de destino  
+3. **Migración ETL** - Proceso de extracción, transformación y carga de datos
+
+---
+
+# 1. Conexión a SQL Server
+
+Esta sección cubre la configuración y puesta en marcha del entorno SQL Server que contiene los datos de origen.
 
 ## 🛠️ Prerrequisitos
 
@@ -23,22 +35,28 @@ docker compose version
 
 > 📝 **Nota**: Este proyecto usa la sintaxis moderna `docker compose` (sin guión), no `docker-compose`.
 
-## 📁 Estructura del Proyecto
+## 📁 Estructura del Proyecto SQL Server
 
 ```
 etl-sibne/
-├── docker-compose.yml      # Configuración del contenedor SQL Server
-├── .env                    # Variables de entorno y credenciales
+├── docker-compose.yml      # Configuración SQL Server
+├── .env                    # Variables de entorno SQL Server
+├── .env.example           # Template de configuración
 ├── README.md              # Este archivo
-├── Backup/                # Carpeta para archivos .bak (coloca aquí tu backup)
-├── scripts/               # Scripts de restauración
+├── Backup/                # Archivos .bak de SQL Server
+│   └── .gitkeep           
+├── Tablas/                # CSV exportados del ETL
+│   └── .gitkeep
+├── logs/                  # Logs del proceso ETL
+│   └── .gitkeep
+├── scripts/               # Scripts de restauración SQL Server
 │   ├── restore-backup.sh  # Script bash para restaurar backup
 │   └── restore-backup.sql # Script SQL alternativo
-└── src/                   # Código fuente de la aplicación
+└── src/                   # Código fuente del ETL Node.js
     └── index.js
 ```
 
-## 🚀 Instrucciones de Instalación y Ejecución
+## 🚀 Configuración de SQL Server
 
 ### Paso 1: Clonar o Descargar el Proyecto
 
@@ -53,7 +71,7 @@ cd etl-sibne
 
 ### Paso 2: Configurar Variables de Entorno
 
-1. **Abre el archivo `.env`** en un editor de texto
+1. **copia el archivo `.env.example`** a `.env`
 2. **Modifica las siguientes variables:**
 
 ```env
@@ -163,7 +181,7 @@ docker compose exec sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -
 docker compose exec sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P 'TU_PASSWORD_AQUI' -C -d SIBNE_ETL -Q "SELECT TOP 10 TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME"
 ```
 
-## 🔌 Conexión a la Base de Datos
+## 🔌 Conexión a SQL Server
 
 ### Desde aplicaciones externas (SQL Server Management Studio, DBeaver, etc.):
 
@@ -188,7 +206,7 @@ Server=localhost,1433;Database=SIBNE_ETL;User Id=SA;Password=4Emperador*;TrustSe
 
 > 🔐 **Seguridad**: Reemplaza `4Emperador*` con tu password real del archivo `.env`
 
-## 🛠️ Comandos de Gestión
+## 🛠️ Comandos de Gestión SQL Server
 
 ### Comandos Básicos
 
@@ -215,7 +233,7 @@ docker compose up -d
 # Conectarse directamente a SQL Server desde terminal
 docker compose exec sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P 'TU_PASSWORD_AQUI' -C
 
-# Ejecutar una consulta rápida  
+# Ejecutar una consulta rápida
 docker compose exec sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P 'TU_PASSWORD_AQUI' -C -Q "SELECT @@VERSION"
 
 # Conectarse a una base de datos específica
@@ -251,7 +269,7 @@ docker compose exec sqlserver df -h
 docker compose ps
 ```
 
-## 📂 Estructura de Volúmenes y Persistencia
+## 📂 Volúmenes y Persistencia SQL Server
 
 | Volumen          | Ubicación en Contenedor  | Descripción                            |
 | ---------------- | ------------------------ | -------------------------------------- |
@@ -262,7 +280,7 @@ docker compose ps
 
 > 💾 **Persistencia**: Todos los datos de la base de datos se mantienen aunque se reinicie o elimine el contenedor.
 
-## ⚠️ Notas Importantes y Seguridad
+## ⚠️ Notas Importantes SQL Server
 
 ### 🔐 Seguridad
 
@@ -288,7 +306,7 @@ docker-compose exec sqlserver /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P 
 
 El contenedor incluye un health check automático que verifica cada 30 segundos que SQL Server esté respondiendo correctamente.
 
-## 🚨 Solución de Problemas
+## 🚨 Solución de Problemas SQL Server
 
 ### Problema: El contenedor no inicia
 
@@ -381,7 +399,7 @@ docker compose exec sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -
 docker compose exec sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P 'TU_PASSWORD_AQUI' -C -d SIBNE_ETL -Q "SELECT COUNT(*) as TotalTablas FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'"
 ```
 
-## 🎯 Comandos de Limpieza
+## 🎯 Limpieza del Entorno SQL Server
 
 Si necesitas empezar desde cero:
 
@@ -399,36 +417,7 @@ docker system prune
 docker compose up -d
 ```
 
-## 📞 Soporte
-
-Si experimentas problemas no cubiertos en esta guía:
-
-1. **Revisa los logs**: `docker compose logs sqlserver`
-2. **Verifica la configuración**: Revisa `.env` y `docker-compose.yml`
-3. **Consulta la documentación oficial**: [SQL Server en Docker](https://docs.microsoft.com/en-us/sql/linux/sql-server-linux-docker-container-deployment)
-
----
-
-## 📝 Resumen de Comandos Rápidos
-
-```bash
-# Setup inicial
-vim .env                                    # Configurar credenciales
-cp /ruta/backup.bak ./Backup/              # Copiar backup
-docker compose up -d                       # Levantar SQL Server
-
-# Restaurar backup (automático)
-chmod +x scripts/restore-backup.sh
-docker compose exec sqlserver /var/opt/mssql/scripts/restore-backup.sh
-
-# Verificar (usa tu password real)
-docker compose exec sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P 'TU_PASSWORD_AQUI' -C -Q "SELECT name FROM sys.databases"
-
-# Conectar desde aplicación externa
-# Server: localhost,1433 | User: SA | Password: [tu password del .env]
-```
-
-## ✅ **Prueba Exitosa Realizada**
+### ✅ **Prueba Exitosa SQL Server**
 
 Este entorno ha sido completamente probado y funciona correctamente:
 
@@ -438,7 +427,7 @@ Este entorno ha sido completamente probado y funciona correctamente:
 - ✅ **Upgrade automático**: Versión 904 → 957 completado
 - ✅ **Conexión verificada**: Acceso completo funcionando
 
-### 🎯 **Configuración utilizada en las pruebas:**
+#### 🎯 **Configuración utilizada en las pruebas:**
 - Password: `4Emperador*`
 - Puerto: `1433`
 - Backup: `SIBNE_backup_2025_08_29_000002_1942499.bak`
@@ -446,4 +435,62 @@ Este entorno ha sido completamente probado y funciona correctamente:
 
 ---
 
-¡Tu entorno SQL Server está listo para usar! 🚀
+# 2. Conexión a PostgreSQL
+
+Esta sección cubre la configuración y puesta en marcha del entorno PostgreSQL que será el destino de los datos migrados.
+
+## 🛠️ Prerrequisitos PostgreSQL
+
+*Esta sección se desarrollará próximamente...*
+
+## 🚀 Configuración de PostgreSQL
+
+*Esta sección se desarrollará próximamente...*
+
+## 🔌 Conexión a PostgreSQL
+
+*Esta sección se desarrollará próximamente...*
+
+## 🛠️ Comandos de Gestión PostgreSQL
+
+*Esta sección se desarrollará próximamente...*
+
+---
+
+# 3. Migración ETL
+
+Esta sección cubre el proceso de extracción, transformación y carga de datos entre SQL Server y PostgreSQL usando Node.js.
+
+## 🛠️ Prerrequisitos ETL
+
+*Esta sección se desarrollará próximamente...*
+
+## 🚀 Configuración del ETL
+
+*Esta sección se desarrollará próximamente...*
+
+## 📊 Proceso de Migración
+
+*Esta sección se desarrollará próximamente...*
+
+## 🔄 Mapeo de Datos
+
+*Esta sección se desarrollará próximamente...*
+
+## 📈 Monitoreo y Logs
+
+*Esta sección se desarrollará próximamente...*
+
+---
+
+## 📞 Soporte General
+
+Si experimentas problemas no cubiertos en esta guía:
+
+1. **Revisa los logs**: Según la fase del proyecto
+2. **Verifica la configuración**: Revisa archivos `.env` correspondientes
+3. **Contacto directo**: soporte@tchile.com
+
+---
+
+¡El proyecto ETL SIBNE está en desarrollo! 🚀
