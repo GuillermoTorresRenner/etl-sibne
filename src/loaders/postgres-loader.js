@@ -127,17 +127,21 @@ export class PostgreSQLLoader {
 
       // Filtrar columnas binarias problemáticas
       const filteredColumns = columns.filter((col) => {
+        // Adaptar tanto para esquema de getTableSchema (name, type) como para esquema tradicional (COLUMN_NAME, DATA_TYPE)
+        const columnName = col.COLUMN_NAME || col.name;
+        const dataType = col.DATA_TYPE || col.type;
+        
         const isBinary =
           this.BINARY_COLUMNS_TO_SKIP.some((skipCol) =>
-            col.COLUMN_NAME.toLowerCase().includes(skipCol.toLowerCase())
+            columnName.toLowerCase().includes(skipCol.toLowerCase())
           ) ||
           ["binary", "varbinary", "image"].includes(
-            col.DATA_TYPE.toLowerCase()
+            dataType.toLowerCase()
           );
 
         if (isBinary) {
           logger.warn(
-            `⚠️ Saltando columna binaria: ${col.COLUMN_NAME} (${col.DATA_TYPE})`
+            `⚠️ Saltando columna binaria: ${columnName} (${dataType})`
           );
           return false;
         }
@@ -145,15 +149,16 @@ export class PostgreSQLLoader {
       });
 
       const columnDefinitions = filteredColumns.map((col) => {
-        const pgType = this.mapDataType(
-          col.DATA_TYPE,
-          col.CHARACTER_MAXIMUM_LENGTH,
-          col.NUMERIC_PRECISION,
-          col.NUMERIC_SCALE
-        );
-
-        const nullable = col.IS_NULLABLE === "YES" ? "" : " NOT NULL";
-        return `"${col.COLUMN_NAME}" ${pgType}${nullable}`;
+        // Adaptar tanto para esquema de getTableSchema (name, type) como para esquema tradicional
+        const columnName = col.COLUMN_NAME || col.name;
+        const dataType = col.DATA_TYPE || col.type;
+        const maxLength = col.CHARACTER_MAXIMUM_LENGTH || col.maxLength;
+        const precision = col.NUMERIC_PRECISION || col.precision;
+        const scale = col.NUMERIC_SCALE || col.scale;
+        const nullable = (col.IS_NULLABLE || col.nullable) === "YES" ? "" : " NOT NULL";
+        
+        const pgType = this.mapDataType(dataType, maxLength, precision, scale);
+        return `"${columnName}" ${pgType}${nullable}`;
       });
 
       const createTableSQL = `
@@ -446,6 +451,20 @@ export class PostgreSQLLoader {
       return createTableSQL;
     } catch (error) {
       logger.error(`❌ Error creando tabla ArchivoAdjunto:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Obtener conteo de filas de una tabla
+   */
+  async getRowCount(tableName) {
+    try {
+      await this.connect();
+      const result = await this.pool.query(`SELECT COUNT(*) as count FROM ${tableName}`);
+      return parseInt(result.rows[0].count);
+    } catch (error) {
+      logger.error(`❌ Error contando filas en ${tableName}:`, error);
       throw error;
     }
   }

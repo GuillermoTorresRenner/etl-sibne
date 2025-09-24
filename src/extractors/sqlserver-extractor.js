@@ -279,6 +279,120 @@ export class SqlServerExtractor {
   }
 
   /**
+   * Obtener conteo de filas de una tabla
+   */
+  async getRowCount(tableName) {
+    try {
+      await this.connect();
+      const result = await this.pool.request()
+        .query(`SELECT COUNT(*) as count FROM dbo.[${tableName}]`);
+      return result.recordset[0].count;
+    } catch (error) {
+      logger.error(`❌ Error contando filas en ${tableName}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Obtener esquema de una tabla
+   */
+  async getTableSchema(tableName) {
+    try {
+      await this.connect();
+      const result = await this.pool.request()
+        .input('tableName', sql.VarChar, tableName)
+        .query(`
+          SELECT 
+            c.COLUMN_NAME as name,
+            c.DATA_TYPE as type,
+            c.IS_NULLABLE as nullable,
+            c.CHARACTER_MAXIMUM_LENGTH as maxLength,
+            CASE WHEN pk.COLUMN_NAME IS NOT NULL THEN 1 ELSE 0 END as isPrimaryKey
+          FROM INFORMATION_SCHEMA.COLUMNS c
+          LEFT JOIN (
+            SELECT ku.TABLE_NAME, ku.COLUMN_NAME
+            FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc
+            INNER JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE ku
+              ON tc.CONSTRAINT_TYPE = 'PRIMARY KEY' 
+              AND tc.CONSTRAINT_NAME = ku.CONSTRAINT_NAME
+          ) pk ON c.TABLE_NAME = pk.TABLE_NAME AND c.COLUMN_NAME = pk.COLUMN_NAME
+          WHERE c.TABLE_NAME = @tableName
+          ORDER BY c.ORDINAL_POSITION
+        `);
+      return result.recordset;
+    } catch (error) {
+      logger.error(`❌ Error obteniendo esquema de ${tableName}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Obtener muestra de datos
+   */
+  async getSampleData(tableName, limit = 10) {
+    try {
+      await this.connect();
+      const result = await this.pool.request()
+        .query(`SELECT TOP ${limit} * FROM dbo.[${tableName}]`);
+      return result.recordset;
+    } catch (error) {
+      logger.error(`❌ Error obteniendo muestra de ${tableName}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Verificar valores NULL en columnas
+   */
+  async checkNullValues(tableName) {
+    try {
+      await this.connect();
+      const schema = await this.getTableSchema(tableName);
+      const nullChecks = [];
+      
+      for (const column of schema) {
+        const result = await this.pool.request()
+          .query(`SELECT COUNT(*) as nullCount FROM dbo.[${tableName}] WHERE [${column.name}] IS NULL`);
+        
+        if (result.recordset[0].nullCount > 0) {
+          nullChecks.push({
+            column: column.name,
+            nullCount: result.recordset[0].nullCount
+          });
+        }
+      }
+      
+      return nullChecks;
+    } catch (error) {
+      logger.error(`❌ Error verificando valores NULL en ${tableName}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Verificar registros duplicados
+   */
+  async checkDuplicates(tableName, columnName) {
+    try {
+      await this.connect();
+      const result = await this.pool.request()
+        .query(`
+          SELECT COUNT(*) as duplicates
+          FROM (
+            SELECT [${columnName}], COUNT(*) as cnt
+            FROM dbo.[${tableName}]
+            GROUP BY [${columnName}]
+            HAVING COUNT(*) > 1
+          ) duplicated
+        `);
+      return result.recordset[0].duplicates;
+    } catch (error) {
+      logger.error(`❌ Error verificando duplicados en ${tableName}.${columnName}:`, error);
+      throw error;
+    }
+  }
+
+  /**
    * Cerrar conexión
    */
   async disconnect() {
