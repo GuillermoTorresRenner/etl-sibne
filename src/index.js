@@ -3,6 +3,21 @@
 import { ETLPipeline } from "./etl-pipeline.js";
 import { logger } from "./utils/logger.js";
 import { config } from "./config/database.js";
+import MigrationReportGenerator from "../generate-migration-report.js";
+
+/**
+ * Genera el reporte de migración automáticamente
+ */
+async function generateMigrationReport() {
+  try {
+    const generator = new MigrationReportGenerator();
+    const reportPath = await generator.generateReport();
+    logger.info(`✅ Reporte generado exitosamente: ${reportPath}`);
+  } catch (error) {
+    logger.error("❌ Error generando reporte de migración:", error);
+    // No fallar la migración por error en reporte
+  }
+}
 
 /**
  * ETL SIBNE - Migración de SQL Server a PostgreSQL
@@ -79,9 +94,19 @@ async function main() {
     // Código de salida basado en resultados
     if (stats.errors.length === 0) {
       logger.info("🎉 MIGRACIÓN COMPLETADA EXITOSAMENTE");
+
+      // 📋 Generar reporte automáticamente al finalizar
+      logger.info("📋 Generando reporte de migración...");
+      await generateMigrationReport();
+
       process.exit(0);
     } else if (stats.success.length > 0) {
       logger.warn("⚠️ MIGRACIÓN COMPLETADA CON ERRORES PARCIALES");
+
+      // 📋 Generar reporte incluso con errores parciales
+      logger.info("📋 Generando reporte de migración...");
+      await generateMigrationReport();
+
       process.exit(1);
     } else {
       logger.error("💥 MIGRACIÓN FALLÓ COMPLETAMENTE");

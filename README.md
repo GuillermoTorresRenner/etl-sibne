@@ -1,14 +1,42 @@
-# ETL SIBNE - Migración de SQL Server a PostgreSQL
+# 🚀 ETL SIBNE - Sistema de Migración Completo
 
 ## 📋 Descripción del Proyecto
 
-Este proyecto se centra en la realización de **migraciones de datos** entre la base de datos SIBNE Legacy, la cual se encuentra en **SQL Server** hacia una base de datos optimizada realizada en **PostgreSQL**. El objetivo principal es extraer, transformar y cargar (ETL) los datos de manera eficiente y segura, asegurando la integridad y consistencia de la información durante todo el proceso.
+| Sistema integral        | Script                             | Propósito                           | Comando                                                                                                             |
+| ----------------------- | ---------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **ETL Principal**       | Migra 40 tablas + reporte auto     | `node src/index.js`                 |
+| **Extracción Binaria**  | Extrae archivos con nanoid         | `node extract-binaries.js`          |
+| **Migración Metadatos** | Migra info archivos + reporte auto | `node migrate-archivo-adjunto.js`   |
+| **Reporte Manual**      | Regenerar reporte (opcional)       | `node generate-migration-report.js` | a **migración completa de datos y archivos** de SIBNE Legacy desde **SQL Server** hacia **PostgreSQL**, incluyendo: |
 
-### 🎯 Fases del Proyecto
+- ✅ **Migración de datos estructurados** (40 tablas)
+- ✅ **Extracción y migración de archivos binarios**
+- ✅ **Nomenclatura inteligente** con fecha y nanoid
+- ✅ **Integración con backend** para manejo de uploads
+- ✅ **Reportes automáticos** de migración
+- ✅ **Validación de integridad** de datos
 
-1. **Conexión a SQL Server** - Configuración del entorno de base de datos de origen
-2. **Conexión a PostgreSQL** - Configuración del entorno de base de datos de destino
-3. **Migración ETL** - Proceso de extracción, transformación y carga de datos
+### 🎯 Flujo Completo del Proceso
+
+```mermaid
+graph LR
+    A[SQL Server] --> B[Extracción Datos]
+    A --> C[Extracción Binarios]
+    B --> D[PostgreSQL]
+    C --> E[extracted_files/]
+    E --> F[Backend uploads/]
+    D --> G[Reporte Final]
+    F --> G
+```
+
+### �️ Fases del Proyecto
+
+1. **🔧 Configuración de Entornos** - SQL Server y PostgreSQL
+2. **📊 Migración de Datos Estructurados** - 40 tablas con validación
+3. **📁 Extracción de Archivos Binarios** - Sistema inteligente con nanoid
+4. **🔄 Migración de Metadatos** - Vinculación de archivos con datos
+5. **📤 Integración con Backend** - Movimiento a carpeta uploads
+6. **📋 Generación de Reportes** - Documentación automática
 
 ---
 
@@ -35,26 +63,49 @@ docker compose version
 
 > 📝 **Nota**: Este proyecto usa la sintaxis moderna `docker compose` (sin guión), no `docker-compose`.
 
-## 📁 Estructura del Proyecto SQL Server
+## 📁 Estructura Completa del Proyecto
 
 ```
 etl-sibne/
-├── docker-compose.yml      # Configuración SQL Server
-├── .env                    # Variables de entorno SQL Server
-├── .env.example           # Template de configuración
-├── README.md              # Este archivo
-├── Backup/                # Archivos .bak de SQL Server
-│   └── .gitkeep
-├── Tablas/                # CSV exportados del ETL
-│   └── .gitkeep
-├── logs/                  # Logs del proceso ETL
-│   └── .gitkeep
-├── scripts/               # Scripts de restauración SQL Server
-│   ├── restore-backup.sh  # Script bash para restaurar backup
-│   └── restore-backup.sql # Script SQL alternativo
-└── src/                   # Código fuente del ETL Node.js
-    └── index.js
+├── 🔧 CONFIGURACIÓN
+│   ├── docker-compose.yml                    # SQL Server containerizado
+│   ├── .env                                  # Variables de entorno
+│   ├── .env.example                         # Template de configuración
+│   └── package.json                         # Dependencias Node.js
+│
+├── 📊 SCRIPTS PRINCIPALES
+│   ├── src/index.js                         # ETL principal (40 tablas)
+│   ├── extract-binaries.js                  # Extracción de archivos binarios
+│   ├── migrate-archivo-adjunto.js           # Migración de metadatos de archivos
+│   └── generate-migration-report.js         # Generador de reportes
+│
+├── 📁 DATOS Y ARCHIVOS
+│   ├── Backup/                              # Respaldos SQL Server (.bak)
+│   ├── extracted_files/                     # ⭐ Archivos binarios extraídos
+│   │   ├── 2025-09-24_nanoid.pdf           # Nomenclatura: fecha_nanoid.ext
+│   │   ├── dbo.ArchivoAdjunto_manifest.json # Manifiesto de archivos
+│   │   └── dbo.ArchivoAdjunto_migration.sql # Script de migración
+│   ├── Tablas/                              # Preparado para futuras exportaciones CSV
+│   └── logs/                                # Logs del proceso ETL
+│
+├── 🛠️ UTILIDADES
+│   ├── scripts/restore-backup.sh            # Restauración de backup
+│   ├── src/utils/binary-extractor.js        # Utilidad de extracción binaria
+│   └── MIGRATION_REPORT.md                  # 📋 Reporte final generado
+│
+└── 📚 DOCUMENTACIÓN
+    ├── README.md                            # Esta guía completa
+    └── backend_multer_config.md             # Configuración backend
 ```
+
+### 🎯 **Scripts de Ejecución Disponibles**
+
+| Script                  | Propósito                      | Comando                             |
+| ----------------------- | ------------------------------ | ----------------------------------- |
+| **ETL Principal**       | Migra 40 tablas SQL→PostgreSQL | `node src/index.js`                 |
+| **Extracción Binaria**  | Extrae archivos con nanoid     | `node extract-binaries.js`          |
+| **Migración Metadatos** | Migra info de archivos         | `node migrate-archivo-adjunto.js`   |
+| **Reporte Final**       | Genera reporte completo        | `node generate-migration-report.js` |
 
 ## 🚀 Configuración de SQL Server
 
@@ -458,29 +509,314 @@ _Esta sección se desarrollará próximamente..._
 
 ---
 
-# 3. Migración ETL
+# 3. 🚀 Proceso de Migración Completo
 
-Esta sección cubre el proceso de extracción, transformación y carga de datos entre SQL Server y PostgreSQL usando Node.js.
+## 📋 Resumen del Flujo de Migración
 
-## 🛠️ Prerrequisitos ETL
+El proceso de migración se ejecuta en **4 fases secuenciales**:
 
-_Esta sección se desarrollará próximamente..._
+```
+1️⃣ Migración de Datos Estructurados (40 tablas)
+       ↓
+2️⃣ Extracción de Archivos Binarios (con nanoid)
+       ↓
+3️⃣ Migración de Metadatos de Archivos
+       ↓
+4️⃣ Migración Manual a Backend + Reporte Final
+```
 
-## 🚀 Configuración del ETL
+---
 
-_Esta sección se desarrollará próximamente..._
+## 🛠️ Prerrequisitos para Migración
 
-## 📊 Proceso de Migración
+### Instalación de Dependencias
 
-_Esta sección se desarrollará próximamente..._
+```bash
+# Instalar dependencias Node.js
+npm install
 
-## 🔄 Mapeo de Datos
+# Verificar versión de Node (requerido >= 16)
+node --version
+```
 
-_Esta sección se desarrollará próximamente..._
+### Configuración de Variables de Entorno
 
-## 📈 Monitoreo y Logs
+Asegúrate de que tu archivo `.env` contenga:
 
-_Esta sección se desarrollará próximamente..._
+```env
+# PostgreSQL (destino)
+PG_USER=postgres
+PG_PASSWORD=tu_password_postgresql
+PG_HOST=localhost
+PG_PORT=5432
+PG_DATABASE=sibne_backend_db
+
+# SQL Server (origen)
+SA_PASSWORD=tu_password_sqlserver
+SQL_HOST=localhost
+SQL_PORT=1433
+DB_NAME=SIBNE_ETL
+
+# Configuración de rutas
+LOGS_PATH=./logs
+BINARY_EXTRACTION_PATH=./extracted_files
+```
+
+---
+
+## 📊 FASE 1: Migración de Datos Estructurados
+
+### Ejecución del ETL Principal
+
+```bash
+# Ejecutar migración de 40 tablas
+node src/index.js
+```
+
+### ✅ Qué hace esta fase:
+
+- Conecta a SQL Server origen y PostgreSQL destino
+- Migra **40 tablas** con validación de integridad
+- Maneja **1,000 registros por lote** con concurrencia de 3 tablas
+- Genera logs detallados en `./logs/`
+- Implementa reintentos automáticos (3 intentos por tabla)
+
+### � Monitoreo
+
+```bash
+# Ver progreso en tiempo real
+tail -f logs/etl-combined.log
+
+# Ver solo errores
+tail -f logs/etl-errors.log
+```
+
+---
+
+## 📁 FASE 2: Extracción de Archivos Binarios
+
+### 🎯 Sistema Inteligente de Nomenclatura
+
+Los archivos se extraen con **nomenclatura inteligente**:
+
+- **Formato**: `YYYY-MM-DD_nanoid.extensión`
+- **Ejemplo**: `2025-09-24_QAbMtdKOo4E2ojUJVcUBu.pdf`
+- **Beneficios**:
+  - 🔒 **Seguridad**: IDs únicos no predecibles
+  - 📅 **Organización**: Fecha de extracción visible
+  - 🚀 **Rendimiento**: Evita conflictos de nombres
+
+### Ejecución de Extracción
+
+```bash
+# Extraer todos los archivos binarios
+node extract-binaries.js
+```
+
+### ✅ Qué hace esta fase:
+
+- Conecta a SQL Server y localiza tabla `ArchivoAdjunto`
+- Extrae archivos binarios de campo `VARBINARY(MAX)`
+- Genera nombres únicos: `fecha_nanoid.extensión`
+- Guarda archivos en `./extracted_files/`
+- Crea manifiesto JSON con mapeo ID → archivo
+- Genera reporte de extracción
+
+### 📄 Archivos Generados
+
+```
+extracted_files/
+├── 2025-09-24_nanoid1.pdf           # Archivo extraído
+├── 2025-09-24_nanoid2.pdf           # Archivo extraído
+├── ...
+├── dbo.ArchivoAdjunto_manifest.json # 📋 Mapeo ID → archivo
+└── dbo.ArchivoAdjunto_migration.sql # 📄 Script SQL de migración
+```
+
+### 🔍 Verificar Resultados
+
+```bash
+# Ver archivos extraídos
+ls -la extracted_files/*.pdf
+
+# Ver estadísticas del manifest
+cat extracted_files/dbo.ArchivoAdjunto_manifest.json | jq '.extractedFiles | length'
+```
+
+---
+
+## � FASE 3: Migración de Metadatos de Archivos
+
+### Ejecución de Migración de Metadatos
+
+```bash
+# Migrar metadatos de archivos a PostgreSQL
+node migrate-archivo-adjunto.js
+```
+
+### ✅ Qué hace esta fase:
+
+- Lee el manifiesto generado en Fase 2
+- Conecta a PostgreSQL destino
+- Crea registros en `dbo.ArchivoAdjunto` con:
+  - `Id`: ID original de SQL Server
+  - `NombreArchivo`: Nombre original del archivo
+  - `Tipo`: Tipo/categoría del archivo
+  - `Ext`: Extensión del archivo
+  - `FileName`: 🎯 **Nuevo nombre** con nanoid
+- Valida integridad de datos
+
+### 📊 Estructura de Tabla Destino
+
+```sql
+-- PostgreSQL: dbo.ArchivoAdjunto
+CREATE TABLE dbo."ArchivoAdjunto" (
+    "Id" integer NOT NULL,
+    "NombreArchivo" varchar(255),
+    "Tipo" varchar(50),
+    "Ext" varchar(10),
+    "FileName" varchar(255) -- ⭐ Campo clave con nanoid
+);
+```
+
+---
+
+## 🚚 FASE 4: Migración Manual a Backend
+
+### ⚠️ **PASO CRÍTICO**: Mover Archivos al Backend
+
+Los archivos extraídos **DEBEN** moverse manualmente a la carpeta `uploads/` del backend:
+
+```bash
+# Opción 1: Copiar todos los archivos
+cp ./extracted_files/*.pdf /ruta/al/backend/uploads/
+
+# Opción 2: Mover archivos (si backend está en carpeta hermana)
+cp ./extracted_files/*.pdf ../sibne-backend/uploads/
+
+# Opción 3: Rsync para sincronización avanzada
+rsync -av ./extracted_files/*.pdf /ruta/al/backend/uploads/
+```
+
+### � Validar Migración al Backend
+
+```bash
+# Verificar que los archivos estén en backend
+ls -la /ruta/al/backend/uploads/ | grep "2025-09-24"
+
+# Contar archivos migrados
+ls -1 /ruta/al/backend/uploads/*.pdf | wc -l
+```
+
+### 🎯 Configuración Backend (Multer)
+
+El backend debe estar configurado para usar los nombres con nanoid:
+
+```javascript
+// backend/config/multer.js
+const path = require("path");
+
+// Los archivos ya tienen nomenclatura correcta
+// El backend solo necesita referenciar por FileName desde BD
+```
+
+---
+
+## 📋 Generación Automática de Reporte Final
+
+### ✅ **Reporte Generado Automáticamente**
+
+🎯 **El reporte se genera automáticamente** al finalizar cualquiera de estos procesos:
+
+- ✅ **Migración ETL completa**: `node src/index.js`
+- ✅ **Migración de metadatos**: `node migrate-archivo-adjunto.js`
+
+### 🔧 **Generación Manual (Opcional)**
+
+Si necesitas regenerar el reporte manualmente:
+
+```bash
+# Generar reporte detallado de toda la migración
+node generate-migration-report.js
+```
+
+### ✅ El reporte incluye:
+
+- 📊 **Estadísticas completas**: Tablas migradas, archivos procesados
+- � **Métricas de rendimiento**: Tasa de éxito, errores detectados
+- 📁 **Detalles de archivos**: Lista completa, tamaños, ubicaciones
+- ⚠️ **Acciones pendientes**: Recordatorios para migración al backend
+- 🎯 **Estado final**: Resumen ejecutivo para cliente
+
+### 📄 Archivo Generado: `MIGRATION_REPORT.md`
+
+El reporte se genera automáticamente con:
+
+- Formato Markdown con HTML embebido
+- Gráficos y estadísticas visuales
+- Información técnica detallada
+- Recomendaciones post-migración
+
+---
+
+## 🎯 Validación Final del Proceso
+
+### Checklist de Migración Completa
+
+- [ ] ✅ **40 tablas migradas** a PostgreSQL
+- [ ] ✅ **Archivos binarios extraídos** con nanoid
+- [ ] ✅ **Metadatos migrados** con campo FileName
+- [ ] ✅ **Archivos copiados** a backend/uploads/
+- [ ] ✅ **Reporte generado** para cliente
+- [ ] ✅ **Backend configurado** para usar nanoid
+- [ ] ✅ **Tests de integración** ejecutados
+
+### Comandos de Verificación Final
+
+```bash
+# 1. Verificar conexión PostgreSQL
+psql -h localhost -U postgres -d sibne_backend_db -c "SELECT COUNT(*) FROM dbo.\"ArchivoAdjunto\";"
+
+# 2. Verificar archivos en backend
+ls -la /ruta/backend/uploads/ | grep -c "2025-09-24"
+
+# 3. Verificar logs sin errores críticos
+grep -i "error" logs/etl-errors.log | wc -l
+
+# 4. Verificar reporte generado
+ls -la MIGRATION_REPORT.md
+```
+
+---
+
+## � Comandos de Gestión
+
+### Scripts Disponibles
+
+```bash
+# Migración completa paso a paso
+node src/index.js                    # Paso 1: ETL de datos (+ reporte automático)
+node extract-binaries.js             # Paso 2: Extraer binarios
+node migrate-archivo-adjunto.js      # Paso 3: Migrar metadatos (+ reporte automático)
+
+# Generación manual de reporte (opcional)
+node generate-migration-report.js    # Regenerar reporte si es necesario# Utilidades adicionales
+node check-schema.js                 # Verificar esquema PostgreSQL
+node test-archivos.js               # Test de archivos
+```
+
+### Logs y Debugging
+
+```bash
+# Ver logs en tiempo real
+tail -f logs/etl-combined.log
+
+# Filtrar errores específicos
+grep -i "binary" logs/etl-combined.log
+
+# Ver estadísticas de archivos
+cat extracted_files/dbo.ArchivoAdjunto_manifest.json | jq '.stats'
+```
 
 ---
 

@@ -140,6 +140,11 @@ Backup/*
 Tablas/*
 !Tablas/.gitkeep
 
+# Reportes de migración generados automáticamente
+MIGRATION_REPORT.md
+migration-report-*.md
+*-report.md
+
 # Archivos de datos temporales
 *.csv
 *.xlsx

@@ -3,6 +3,7 @@ import path from "path";
 import pkg from "pg";
 import sql from "mssql";
 import "dotenv/config";
+import MigrationReportGenerator from "./generate-migration-report.js";
 
 const { Client } = pkg;
 
@@ -239,6 +240,17 @@ async function main() {
       // Verificar migración
       await migrator.verifyMigration();
       console.log("\n✅ MIGRACIÓN COMPLETADA EXITOSAMENTE");
+
+      // 📋 Generar reporte automáticamente
+      console.log("📋 Generando reporte de migración...");
+      try {
+        const generator = new MigrationReportGenerator();
+        const reportPath = await generator.generateReport();
+        console.log(`✅ Reporte generado exitosamente: ${reportPath}`);
+      } catch (error) {
+        console.error("❌ Error generando reporte:", error);
+        // No fallar la migración por error en reporte
+      }
     }
   } catch (error) {
     console.error("❌ Error en la migración:", error);
