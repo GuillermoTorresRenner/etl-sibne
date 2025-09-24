@@ -1,35 +1,35 @@
-import fs from 'fs/promises';
-import path from 'path';
-import pkg from 'pg';
-import sql from 'mssql';
-import 'dotenv/config';
+import fs from "fs/promises";
+import path from "path";
+import pkg from "pg";
+import sql from "mssql";
+import "dotenv/config";
 
 const { Client } = pkg;
 
 // Configuraciones
 const sqlServerConfig = {
-  server: 'localhost',
+  server: "localhost",
   port: 1433,
-  database: 'SIBNE_ETL',
-  user: 'sa',
-  password: '4Emperador*',
+  database: "SIBNE_ETL",
+  user: "sa",
+  password: "4Emperador*",
   pool: {
     max: 10,
     min: 0,
-    idleTimeoutMillis: 30000
+    idleTimeoutMillis: 30000,
   },
   options: {
     encrypt: false,
-    trustServerCertificate: true
-  }
+    trustServerCertificate: true,
+  },
 };
 
 const postgresConfig = {
-  host: 'localhost',
+  host: "localhost",
   port: 5432,
-  database: 'sibne',
-  user: 'sibne',
-  password: 'D3vel0p3rM0deP4SS'
+  database: "sibne",
+  user: "sibne",
+  password: "D3vel0p3rM0deP4SS",
 };
 
 /**
@@ -45,12 +45,17 @@ class ArchivoAdjuntoMigrator {
    */
   async loadExtractedFilesReport() {
     try {
-      const reportPath = path.join(process.cwd(), 'extracted-files-report.json');
-      const reportData = await fs.readFile(reportPath, 'utf8');
+      const reportPath = path.join(
+        process.cwd(),
+        "extracted-files-report.json"
+      );
+      const reportData = await fs.readFile(reportPath, "utf8");
       this.extractedFilesReport = JSON.parse(reportData);
-      console.log(`✅ Cargado reporte de ${this.extractedFilesReport.length} archivos extraídos`);
+      console.log(
+        `✅ Cargado reporte de ${this.extractedFilesReport.length} archivos extraídos`
+      );
     } catch (error) {
-      console.error('❌ Error cargando reporte de archivos extraídos:', error);
+      console.error("❌ Error cargando reporte de archivos extraídos:", error);
       throw error;
     }
   }
@@ -67,12 +72,12 @@ class ArchivoAdjuntoMigrator {
 
       // Conectar a SQL Server
       sqlPool = await sql.connect(sqlServerConfig);
-      console.log('✅ Conectado a SQL Server');
+      console.log("✅ Conectado a SQL Server");
 
       // Conectar a PostgreSQL
       pgClient = new Client(postgresConfig);
       await pgClient.connect();
-      console.log('✅ Conectado a PostgreSQL');
+      console.log("✅ Conectado a PostgreSQL");
 
       // Obtener metadatos de SQL Server
       const sqlResult = await sqlPool.request().query(`
@@ -82,11 +87,13 @@ class ArchivoAdjuntoMigrator {
         ORDER BY Id
       `);
 
-      console.log(`📊 Encontrados ${sqlResult.recordset.length} registros en SQL Server`);
+      console.log(
+        `📊 Encontrados ${sqlResult.recordset.length} registros en SQL Server`
+      );
 
       // Crear mapeo entre IDs originales y archivos extraídos
       const fileMap = new Map();
-      this.extractedFilesReport.forEach(file => {
+      this.extractedFilesReport.forEach((file) => {
         fileMap.set(file.originalId, file);
       });
 
@@ -99,7 +106,9 @@ class ArchivoAdjuntoMigrator {
         const extraccionFileInfo = fileMap.get(Id);
 
         if (!extraccionFileInfo) {
-          console.log(`⚠️  Archivo ID ${Id} no encontrado en archivos extraídos, saltando...`);
+          console.log(
+            `⚠️  Archivo ID ${Id} no encontrado en archivos extraídos, saltando...`
+          );
           skippedCount++;
           continue;
         }
@@ -112,17 +121,13 @@ class ArchivoAdjuntoMigrator {
               "NombreArchivo", 
               "Tipo", 
               "Ext", 
-              "Location", 
-              "NanoId", 
-              "RutaRelativa"
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+              "FileName"
+            ) VALUES ($1, $2, $3, $4, $5)
             ON CONFLICT ("Id") DO UPDATE SET
               "NombreArchivo" = EXCLUDED."NombreArchivo",
               "Tipo" = EXCLUDED."Tipo",
               "Ext" = EXCLUDED."Ext",
-              "Location" = EXCLUDED."Location",
-              "NanoId" = EXCLUDED."NanoId",
-              "RutaRelativa" = EXCLUDED."RutaRelativa"
+              "FileName" = EXCLUDED."FileName"
           `;
 
           await pgClient.query(insertQuery, [
@@ -130,21 +135,20 @@ class ArchivoAdjuntoMigrator {
             NombreArchivo,
             Tipo,
             Ext,
-            extraccionFileInfo.location,
-            extraccionFileInfo.nanoId,
-            extraccionFileInfo.relativePath
+            extraccionFileInfo.fileName, // Solo el nombre del archivo con extensión
           ]);
 
           insertedCount++;
-          console.log(`✅ Migrado: ${NombreArchivo} (ID: ${Id}) → ${extraccionFileInfo.fileName}`);
-
+          console.log(
+            `✅ Migrado: ${NombreArchivo} (ID: ${Id}) → ${extraccionFileInfo.fileName}`
+          );
         } catch (insertError) {
           console.error(`❌ Error insertando registro ID ${Id}:`, insertError);
           skippedCount++;
         }
       }
 
-      console.log('\n📊 RESUMEN DE MIGRACIÓN:');
+      console.log("\n📊 RESUMEN DE MIGRACIÓN:");
       console.log(`✅ Registros migrados: ${insertedCount}`);
       console.log(`⚠️  Registros saltados: ${skippedCount}`);
       console.log(`📁 Total en SQL Server: ${sqlResult.recordset.length}`);
@@ -153,20 +157,19 @@ class ArchivoAdjuntoMigrator {
         success: true,
         inserted: insertedCount,
         skipped: skippedCount,
-        total: sqlResult.recordset.length
+        total: sqlResult.recordset.length,
       };
-
     } catch (error) {
-      console.error('❌ Error en migración de ArchivoAdjunto:', error);
+      console.error("❌ Error en migración de ArchivoAdjunto:", error);
       throw error;
     } finally {
       if (sqlPool) {
         await sqlPool.close();
-        console.log('✅ Conexión SQL Server cerrada');
+        console.log("✅ Conexión SQL Server cerrada");
       }
       if (pgClient) {
         await pgClient.end();
-        console.log('✅ Conexión PostgreSQL cerrada');
+        console.log("✅ Conexión PostgreSQL cerrada");
       }
     }
   }
@@ -182,31 +185,36 @@ class ArchivoAdjuntoMigrator {
       await pgClient.connect();
 
       // Contar registros en PostgreSQL (schema dbo)
-      const countResult = await pgClient.query('SELECT COUNT(*) as count FROM dbo."ArchivoAdjunto"');
+      const countResult = await pgClient.query(
+        'SELECT COUNT(*) as count FROM dbo."ArchivoAdjunto"'
+      );
       const pgCount = parseInt(countResult.rows[0].count);
 
-      // Verificar que todos tengan Location
-      const locationResult = await pgClient.query('SELECT COUNT(*) as count FROM dbo."ArchivoAdjunto" WHERE "Location" IS NOT NULL');
-      const withLocationCount = parseInt(locationResult.rows[0].count);
+      // Verificar que todos tengan FileName
+      const fileNameResult = await pgClient.query(
+        'SELECT COUNT(*) as count FROM dbo."ArchivoAdjunto" WHERE "FileName" IS NOT NULL'
+      );
+      const withFileNameCount = parseInt(fileNameResult.rows[0].count);
 
-      console.log('\n📋 VERIFICACIÓN DE MIGRACIÓN:');
+      console.log("\n📋 VERIFICACIÓN DE MIGRACIÓN:");
       console.log(`📊 Total registros en PostgreSQL: ${pgCount}`);
-      console.log(`📁 Registros con Location: ${withLocationCount}`);
+      console.log(`📁 Registros con FileName: ${withFileNameCount}`);
 
-      if (pgCount === withLocationCount) {
-        console.log('✅ Todos los registros tienen Location asignado');
+      if (pgCount === withFileNameCount) {
+        console.log("✅ Todos los registros tienen FileName asignado");
       } else {
-        console.log(`⚠️  ${pgCount - withLocationCount} registros sin Location`);
+        console.log(
+          `⚠️  ${pgCount - withFileNameCount} registros sin FileName`
+        );
       }
 
       return {
         totalRecords: pgCount,
-        withLocation: withLocationCount,
-        success: pgCount === withLocationCount
+        withFileName: withFileNameCount,
+        success: pgCount === withFileNameCount,
       };
-
     } catch (error) {
-      console.error('❌ Error verificando migración:', error);
+      console.error("❌ Error verificando migración:", error);
       throw error;
     } finally {
       if (pgClient) {
@@ -218,23 +226,22 @@ class ArchivoAdjuntoMigrator {
 
 // Función principal
 async function main() {
-  console.log('🚀 INICIANDO MIGRACIÓN DE METADATOS DE ARCHIVOS');
-  console.log('='.repeat(50));
-  
+  console.log("🚀 INICIANDO MIGRACIÓN DE METADATOS DE ARCHIVOS");
+  console.log("=".repeat(50));
+
   try {
     const migrator = new ArchivoAdjuntoMigrator();
-    
+
     // Ejecutar migración
     const result = await migrator.migrateArchivoAdjunto();
-    
+
     if (result.success) {
       // Verificar migración
       await migrator.verifyMigration();
-      console.log('\n✅ MIGRACIÓN COMPLETADA EXITOSAMENTE');
+      console.log("\n✅ MIGRACIÓN COMPLETADA EXITOSAMENTE");
     }
-    
   } catch (error) {
-    console.error('❌ Error en la migración:', error);
+    console.error("❌ Error en la migración:", error);
     process.exit(1);
   }
 }
