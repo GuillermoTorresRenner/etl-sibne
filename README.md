@@ -7,7 +7,7 @@ Este proyecto se centra en la realización de **migraciones de datos** entre la 
 ### 🎯 Fases del Proyecto
 
 1. **Conexión a SQL Server** - Configuración del entorno de base de datos de origen
-2. **Conexión a PostgreSQL** - Configuración del entorno de base de datos de destino  
+2. **Conexión a PostgreSQL** - Configuración del entorno de base de datos de destino
 3. **Migración ETL** - Proceso de extracción, transformación y carga de datos
 
 ---
@@ -44,7 +44,7 @@ etl-sibne/
 ├── .env.example           # Template de configuración
 ├── README.md              # Este archivo
 ├── Backup/                # Archivos .bak de SQL Server
-│   └── .gitkeep           
+│   └── .gitkeep
 ├── Tablas/                # CSV exportados del ETL
 │   └── .gitkeep
 ├── logs/                  # Logs del proceso ETL
@@ -428,6 +428,7 @@ Este entorno ha sido completamente probado y funciona correctamente:
 - ✅ **Conexión verificada**: Acceso completo funcionando
 
 #### 🎯 **Configuración utilizada en las pruebas:**
+
 - Password: `4Emperador*`
 - Puerto: `1433`
 - Backup: `SIBNE_backup_2025_08_29_000002_1942499.bak`
@@ -441,19 +442,19 @@ Esta sección cubre la configuración y puesta en marcha del entorno PostgreSQL 
 
 ## 🛠️ Prerrequisitos PostgreSQL
 
-*Esta sección se desarrollará próximamente...*
+_Esta sección se desarrollará próximamente..._
 
 ## 🚀 Configuración de PostgreSQL
 
-*Esta sección se desarrollará próximamente...*
+_Esta sección se desarrollará próximamente..._
 
 ## 🔌 Conexión a PostgreSQL
 
-*Esta sección se desarrollará próximamente...*
+_Esta sección se desarrollará próximamente..._
 
 ## 🛠️ Comandos de Gestión PostgreSQL
 
-*Esta sección se desarrollará próximamente...*
+_Esta sección se desarrollará próximamente..._
 
 ---
 
@@ -463,23 +464,23 @@ Esta sección cubre el proceso de extracción, transformación y carga de datos 
 
 ## 🛠️ Prerrequisitos ETL
 
-*Esta sección se desarrollará próximamente...*
+_Esta sección se desarrollará próximamente..._
 
 ## 🚀 Configuración del ETL
 
-*Esta sección se desarrollará próximamente...*
+_Esta sección se desarrollará próximamente..._
 
 ## 📊 Proceso de Migración
 
-*Esta sección se desarrollará próximamente...*
+_Esta sección se desarrollará próximamente..._
 
 ## 🔄 Mapeo de Datos
 
-*Esta sección se desarrollará próximamente...*
+_Esta sección se desarrollará próximamente..._
 
 ## 📈 Monitoreo y Logs
 
-*Esta sección se desarrollará próximamente...*
+_Esta sección se desarrollará próximamente..._
 
 ---
 

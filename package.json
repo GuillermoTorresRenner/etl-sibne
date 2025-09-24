@@ -2,10 +2,39 @@
   "name": "etl-sibne",
   "version": "1.0.0",
   "description": "An ETL Software for migrations SIBNES's Databases",
-  "main": "index.js",
+  "main": "src/index.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "etl:completa": "node src/index.js",
+    "etl:csv": "node src/index.js --mode=csv",
+    "etl:secuencial": "node src/index.js --sequential",
+    "ejemplos": "node src/ejemplos.js",
+    "ejemplos:completa": "node src/ejemplos.js completa",
+    "ejemplos:csv": "node src/ejemplos.js csv",
+    "analizar": "node src/analizar-tablas.js",
+    "test:conexion": "node src/test-conexion.js conexion",
+    "test:migracion": "node src/test-conexion.js migracion",
+    "test": "npm run test:conexion"
+  },
+  "dependencies": {
+    "mssql": "^10.0.2",
+    "pg": "^8.11.3",
+    "csv-writer": "^1.6.0",
+    "csv-parser": "^3.0.0",
+    "dotenv": "^16.3.1",
+    "winston": "^3.11.0",
+    "progress": "^2.0.3",
+    "p-limit": "^5.0.0",
+    "fast-csv": "^4.3.6"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
   },
   "author": "Guillermo Torres Renner",
-  "license": "MIT"
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
 }

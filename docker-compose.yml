@@ -1,13 +1,15 @@
 services:
+  # SQL Server (Origen) - Base de datos fuente con datos existentes
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: sqlserver-etl-sibne
     hostname: sqlserver
-    user: "0:0"  # Ejecutar como root para evitar problemas de permisos
+    user: "0:0" # Ejecutar como root para evitar problemas de permisos
     environment:
       - ACCEPT_EULA=Y
       - MSSQL_SA_PASSWORD=${SA_PASSWORD}
       - MSSQL_PID=Express
+      - MSSQL_COLLATION=${MSSQL_COLLATION:-SQL_Latin1_General_CP1_CI_AS}
     ports:
       - "${SQL_PORT:-1433}:1433"
     volumes:
@@ -31,16 +33,30 @@ services:
       retries: 5
       start_period: 30s
     networks:
-      - sqlserver_network
+      - etl-network
+
+  # Adminer (Interfaz web opcional para administrar SQL Server)
+  adminer:
+    image: adminer:4.8.1
+    container_name: adminer-etl-sibne
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - ADMINER_DEFAULT_SERVER=sqlserver
+    networks:
+      - etl-network
+    profiles:
+      - admin # Solo se levanta con: docker compose --profile admin up -d
 
 volumes:
-  # Volumen para persistencia de datos de SQL Server
+  # Volúmenes para SQL Server
   sqlserver_data:
     driver: local
-  # Volumen para logs de SQL Server
   sqlserver_logs:
     driver: local
 
 networks:
-  sqlserver_network:
+  etl-network:
     driver: bridge
+    name: etl-sibne-network
