@@ -14,6 +14,9 @@ export class PostgreSQLLoader {
   constructor() {
     this.pool = null;
     this.isConnected = false;
+
+    // Columnas binarias problemáticas a saltar temporalmente
+    this.BINARY_COLUMNS_TO_SKIP = ["FileData", "BinaryData", "Image"];
   }
 
   /**
@@ -122,7 +125,26 @@ export class PostgreSQLLoader {
     try {
       await this.connect();
 
-      const columnDefinitions = columns.map((col) => {
+      // Filtrar columnas binarias problemáticas
+      const filteredColumns = columns.filter((col) => {
+        const isBinary =
+          this.BINARY_COLUMNS_TO_SKIP.some((skipCol) =>
+            col.COLUMN_NAME.toLowerCase().includes(skipCol.toLowerCase())
+          ) ||
+          ["binary", "varbinary", "image"].includes(
+            col.DATA_TYPE.toLowerCase()
+          );
+
+        if (isBinary) {
+          logger.warn(
+            `⚠️ Saltando columna binaria: ${col.COLUMN_NAME} (${col.DATA_TYPE})`
+          );
+          return false;
+        }
+        return true;
+      });
+
+      const columnDefinitions = filteredColumns.map((col) => {
         const pgType = this.mapDataType(
           col.DATA_TYPE,
           col.CHARACTER_MAXIMUM_LENGTH,
@@ -172,28 +194,48 @@ export class PostgreSQLLoader {
 
       // Leer archivo CSV y procesar línea por línea
       const csvData = [];
-      
+
       return new Promise((resolve, reject) => {
-        const fileStream = createReadStream(csvPath, { encoding: 'utf8' });
-        
+        const fileStream = createReadStream(csvPath, { encoding: "utf8" });
+
         fileStream
           .pipe(parse({ headers: true, skipEmptyLines: true }))
-          .on('data', (row) => {
+          .on("data", (row) => {
             csvData.push(row);
           })
-          .on('end', async () => {
+          .on("end", async () => {
             try {
               if (csvData.length === 0) {
-                logger.info(`⚠️ No hay datos para cargar en ${schema}.${tableName}`);
+                logger.info(
+                  `⚠️ No hay datos para cargar en ${schema}.${tableName}`
+                );
                 client.release();
                 return resolve({ rowCount: 0, tableName, schema });
               }
 
+              // Filtrar columnas binarias también en la carga
+              const filteredColumns = columns.filter((col) => {
+                const isBinary =
+                  this.BINARY_COLUMNS_TO_SKIP.some((skipCol) =>
+                    col.COLUMN_NAME.toLowerCase().includes(
+                      skipCol.toLowerCase()
+                    )
+                  ) ||
+                  ["binary", "varbinary", "image"].includes(
+                    col.DATA_TYPE.toLowerCase()
+                  );
+                return !isBinary;
+              });
+
               // Preparar INSERT batch
-              const columnNames = columns.map((col) => col.COLUMN_NAME);
-              const placeholders = columnNames.map((_, i) => `$${i + 1}`).join(', ');
+              const columnNames = filteredColumns.map((col) => col.COLUMN_NAME);
+              const placeholders = columnNames
+                .map((_, i) => `$${i + 1}`)
+                .join(", ");
               const insertQuery = `
-                INSERT INTO "${schema}"."${tableName}" (${columnNames.map(c => `"${c}"`).join(', ')})
+                INSERT INTO "${schema}"."${tableName}" (${columnNames
+                .map((c) => `"${c}"`)
+                .join(", ")})
                 VALUES (${placeholders})
               `;
 
@@ -205,72 +247,94 @@ export class PostgreSQLLoader {
 
               for (let i = 0; i < csvData.length; i += batchSize) {
                 const batch = csvData.slice(i, i + batchSize);
-                
-              for (const row of batch) {
-                const values = columnNames.map(col => {
-                  let value = row[col] || null;
-                  
-                  // Si el valor parece una fecha con timezone, transformarla
-                  if (value && typeof value === 'string') {
-                    // Detectar varios formatos de fecha problemáticos
-                    const datePatterns = [
-                      /GMT-0[34]00.*\(hora.*Chile\)/i,      // GMT-0400 (hora estándar de Chile)
-                      /gmt-0[34]00/i,                       // gmt-0300, gmt-0400
-                      /[A-Z]{3}\s+[A-Z]{3}\s+\d+\s+\d+/     // Wed May 17 2017...
-                    ];
-                    
-                    const hasDatePattern = datePatterns.some(pattern => pattern.test(value));
-                    
-                    if (hasDatePattern) {
-                      try {
-                        // Limpiar el string de fecha para parsing
-                        let cleanDate = value
-                          .replace(/\s+\([^)]+\)$/, '')     // Remover (hora estándar de Chile)
-                          .replace(/gmt-0([34])00/gi, 'GMT-0$1:00'); // Normalizar GMT-0300 -> GMT-03:00
-                        
-                        const date = new Date(cleanDate);
-                        if (!isNaN(date.getTime())) {
-                          value = date.toISOString();
-                        } else {
-                          // Si falla, intentar parsearlo como fecha sin timezone
-                          const simpleDate = cleanDate.replace(/\s+GMT.*$/, '');
-                          const fallbackDate = new Date(simpleDate);
-                          if (!isNaN(fallbackDate.getTime())) {
-                            value = fallbackDate.toISOString();
+
+                for (const row of batch) {
+                  const values = columnNames.map((col) => {
+                    let value = row[col] || null;
+
+                    // Saltar valores de columnas binarias que puedan haber quedado
+                    if (
+                      this.BINARY_COLUMNS_TO_SKIP.some((skipCol) =>
+                        col.toLowerCase().includes(skipCol.toLowerCase())
+                      )
+                    ) {
+                      return null; // O simplemente omitir
+                    }
+
+                    // Si el valor parece una fecha con timezone, transformarla
+                    if (value && typeof value === "string") {
+                      // Detectar varios formatos de fecha problemáticos
+                      const datePatterns = [
+                        /GMT-0[34]00.*\(hora.*Chile\)/i, // GMT-0400 (hora estándar de Chile)
+                        /gmt-0[34]00/i, // gmt-0300, gmt-0400
+                        /[A-Z]{3}\s+[A-Z]{3}\s+\d+\s+\d+/, // Wed May 17 2017...
+                      ];
+
+                      const hasDatePattern = datePatterns.some((pattern) =>
+                        pattern.test(value)
+                      );
+
+                      if (hasDatePattern) {
+                        try {
+                          // Limpiar el string de fecha para parsing
+                          let cleanDate = value
+                            .replace(/\s+\([^)]+\)$/, "") // Remover (hora estándar de Chile)
+                            .replace(/gmt-0([34])00/gi, "GMT-0$1:00"); // Normalizar GMT-0300 -> GMT-03:00
+
+                          const date = new Date(cleanDate);
+                          if (!isNaN(date.getTime())) {
+                            value = date.toISOString();
                           } else {
-                            logger.warn(`⚠️ No se pudo parsear fecha: ${value} -> ${cleanDate}`);
+                            // Si falla, intentar parsearlo como fecha sin timezone
+                            const simpleDate = cleanDate.replace(
+                              /\s+GMT.*$/,
+                              ""
+                            );
+                            const fallbackDate = new Date(simpleDate);
+                            if (!isNaN(fallbackDate.getTime())) {
+                              value = fallbackDate.toISOString();
+                            } else {
+                              logger.warn(
+                                `⚠️ No se pudo parsear fecha: ${value} -> ${cleanDate}`
+                              );
+                            }
                           }
+                        } catch (dateError) {
+                          logger.warn(
+                            `⚠️ Error parseando fecha: ${value}`,
+                            dateError.message
+                          );
                         }
-                      } catch (dateError) {
-                        logger.warn(`⚠️ Error parseando fecha: ${value}`, dateError.message);
                       }
                     }
-                  }
-                  
-                  return value;
-                });
-                await client.query(insertQuery, values);
-                totalInserted++;
-              }                if (totalInserted % 500 === 0) {
-                  logger.info(`📊 Procesadas ${totalInserted}/${csvData.length} filas...`);
+
+                    return value;
+                  });
+                  await client.query(insertQuery, values);
+                  totalInserted++;
+                }
+                if (totalInserted % 500 === 0) {
+                  logger.info(
+                    `📊 Procesadas ${totalInserted}/${csvData.length} filas...`
+                  );
                 }
               }
 
               client.release();
-              logger.info(`✅ ${schema}.${tableName}: ${totalInserted} filas cargadas desde CSV`);
+              logger.info(
+                `✅ ${schema}.${tableName}: ${totalInserted} filas cargadas desde CSV`
+              );
               resolve({ rowCount: totalInserted, tableName, schema });
-
             } catch (insertError) {
               client.release();
               reject(insertError);
             }
           })
-          .on('error', (error) => {
+          .on("error", (error) => {
             client.release();
             reject(error);
           });
       });
-
     } catch (error) {
       if (client) client.release();
       logger.error(`❌ Error cargando CSV en ${schema}.${tableName}:`, error);

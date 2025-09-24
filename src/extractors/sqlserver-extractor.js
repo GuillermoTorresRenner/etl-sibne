@@ -12,6 +12,9 @@ export class SqlServerExtractor {
   constructor() {
     this.pool = null;
     this.isConnected = false;
+
+    // Columnas binarias problemáticas a saltar temporalmente
+    this.BINARY_COLUMNS_TO_SKIP = ["FileData", "BinaryData", "Image"];
   }
 
   /**
@@ -125,25 +128,64 @@ export class SqlServerExtractor {
   }
 
   /**
-   * Extraer datos de una tabla con streaming
+   * Obtener columnas no binarias de una tabla
    */
-  async extractTableStream(
-    tableName,
-    schema = "dbo",
-    batchSize = config.etl.batchSize
-  ) {
+  async getNonBinaryColumns(tableName, schema = "dbo") {
+    const columnsResult = await this.pool.request().query(`
+      SELECT COLUMN_NAME, DATA_TYPE
+      FROM INFORMATION_SCHEMA.COLUMNS 
+      WHERE TABLE_SCHEMA = '${schema}' 
+      AND TABLE_NAME = '${tableName}'
+      ORDER BY ORDINAL_POSITION
+    `);
+
+    return columnsResult.recordset.filter((col) => {
+      const isBinary =
+        this.BINARY_COLUMNS_TO_SKIP.some((skipCol) =>
+          col.COLUMN_NAME.toLowerCase().includes(skipCol.toLowerCase())
+        ) ||
+        ["binary", "varbinary", "image"].includes(col.DATA_TYPE.toLowerCase());
+
+      if (isBinary) {
+        logger.warn(
+          `⚠️ Saltando columna binaria en extracción: ${col.COLUMN_NAME} (${col.DATA_TYPE})`
+        );
+        return false;
+      }
+      return true;
+    });
+  }
+
+  /**
+   * Extraer datos de una tabla (stream)
+   */
+  async extractTableStream(tableName, schema = "dbo") {
     try {
       await this.connect();
 
-      const totalRows = await this.getTableCount(tableName, schema);
+      // Obtener columnas no binarias
+      const nonBinaryColumns = await this.getNonBinaryColumns(
+        tableName,
+        schema
+      );
+      const columnNames = nonBinaryColumns
+        .map((col) => `[${col.COLUMN_NAME}]`)
+        .join(", ");
+
+      // Obtener count total para progress
+      const countResult = await this.pool
+        .request()
+        .query(`SELECT COUNT(*) as total FROM [${schema}].[${tableName}]`);
+      const totalRows = countResult.recordset[0].total;
+
       logger.info(
-        `📤 Extrayendo ${totalRows} registros de ${schema}.${tableName}`
+        `📤 Extrayendo ${totalRows} registros de ${schema}.${tableName} (sin columnas binarias)`
       );
 
       const request = this.pool.request();
       request.stream = true;
 
-      const query = `SELECT * FROM [${schema}].[${tableName}]`;
+      const query = `SELECT ${columnNames} FROM [${schema}].[${tableName}]`;
 
       // En el contexto de streaming, devolvemos el request directamente
       return {

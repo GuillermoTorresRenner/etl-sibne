@@ -48,6 +48,30 @@ jspm_packages/
 .eslintcache
 
 # Microbundle cache
+
+# =====================================
+# ETL & Binary Files
+# =====================================
+
+# Extracted binary files (PDFs, images, etc.)
+extracted_files/
+uploads/
+temp/
+*.pdf
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.doc
+*.docx
+*.xls
+*.xlsx
+
+# CSV backup files (comment out if you want to track them)
+# Tablas/*.csv
+
+# Binary extraction logs
+extraction_*.log
 .rpt2_cache/
 .rts2_cache_cjs/
 .rts2_cache_es/
