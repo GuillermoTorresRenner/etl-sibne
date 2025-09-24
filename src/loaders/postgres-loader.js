@@ -421,6 +421,36 @@ export class PostgreSQLLoader {
   }
 
   /**
+   * Crear tabla ArchivoAdjunto con la estructura correcta y clave primaria
+   */
+  async createArchivoAdjuntoTable(schema = "dbo") {
+    try {
+      await this.connect();
+      await this.createSchemaIfNotExists(schema);
+
+      const createTableSQL = `
+        CREATE TABLE IF NOT EXISTS "${schema}"."ArchivoAdjunto" (
+          "Id" INTEGER NOT NULL,
+          "NombreArchivo" TEXT,
+          "Tipo" TEXT,
+          "Ext" TEXT,
+          "FileName" VARCHAR(255),
+          CONSTRAINT "ArchivoAdjunto_pkey" PRIMARY KEY ("Id")
+        )
+      `;
+
+      logger.info(`🏗️ Creando tabla ArchivoAdjunto con estructura completa...`);
+      await this.pool.query(createTableSQL);
+      logger.info(`✅ Tabla ArchivoAdjunto creada con clave primaria`);
+
+      return createTableSQL;
+    } catch (error) {
+      logger.error(`❌ Error creando tabla ArchivoAdjunto:`, error);
+      throw error;
+    }
+  }
+
+  /**
    * Cerrar conexión
    */
   async disconnect() {

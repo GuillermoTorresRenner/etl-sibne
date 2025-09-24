@@ -40,6 +40,9 @@ export class ETLPipeline {
       await this.sqlExtractor.connect();
       await this.pgLoader.connect();
 
+      // Crear tabla ArchivoAdjunto con la estructura correcta
+      await this.pgLoader.createArchivoAdjuntoTable("dbo");
+
       logger.info("✅ Pipeline inicializado correctamente");
     } catch (error) {
       logger.error("❌ Error inicializando pipeline:", error);
