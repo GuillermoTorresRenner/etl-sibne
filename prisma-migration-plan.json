@@ -1,0 +1,730 @@
+{
+  "timestamp": "2025-09-25T13:46:13.942Z",
+  "totalModels": 45,
+  "independentModels": [
+    "ArchivoAdjunto",
+    "CargaMasivaArchivo",
+    "Encuesta",
+    "EnergeticoGrupos",
+    "EstadoEmail",
+    "EstadoEmpresa",
+    "EstadoProceso",
+    "EstadoReporte",
+    "Formulario",
+    "Pais",
+    "Region",
+    "Role",
+    "SectorEconomico",
+    "SectorEconomicoSii",
+    "SectorEnergetico",
+    "Tecnologia",
+    "TipoContacto",
+    "TipoOtroUso",
+    "TipoPerdida",
+    "TipoTransporte",
+    "TipoUsoProceso",
+    "Users"
+  ],
+  "dependentModels": [
+    "Energetico",
+    "FactorConversion",
+    "UnidadMedida",
+    "CargaMasivaDetalle",
+    "EmailConfig",
+    "Reporte",
+    "CategoriaTransaccion",
+    "Provincia",
+    "UsuarioRole",
+    "SubSectorEconomico",
+    "EnergeticoUnidadMedida",
+    "Comuna",
+    "Empresa",
+    "CargaMasivaError",
+    "Contacto",
+    "EmailLogs",
+    "EncuestaEmpresa",
+    "IntensidadEnergEncuestaEmpresa",
+    "Planta",
+    "Usuario",
+    "TransaccionIntensidadEnergia",
+    "EncuestaPlanta",
+    "Transaccion"
+  ],
+  "migrationOrder": [
+    "ArchivoAdjunto",
+    "CargaMasivaArchivo",
+    "Encuesta",
+    "Energetico",
+    "EnergeticoGrupos",
+    "EstadoEmail",
+    "EstadoEmpresa",
+    "EstadoProceso",
+    "EstadoReporte",
+    "FactorConversion",
+    "Formulario",
+    "Pais",
+    "Region",
+    "Role",
+    "SectorEconomico",
+    "SectorEconomicoSii",
+    "SectorEnergetico",
+    "Tecnologia",
+    "TipoContacto",
+    "TipoOtroUso",
+    "TipoPerdida",
+    "TipoTransporte",
+    "TipoUsoProceso",
+    "UnidadMedida",
+    "Users",
+    "CargaMasivaDetalle",
+    "EmailConfig",
+    "Reporte",
+    "CategoriaTransaccion",
+    "Provincia",
+    "UsuarioRole",
+    "SubSectorEconomico",
+    "EnergeticoUnidadMedida",
+    "Comuna",
+    "Empresa",
+    "CargaMasivaError",
+    "Contacto",
+    "EmailLogs",
+    "EncuestaEmpresa",
+    "IntensidadEnergEncuestaEmpresa",
+    "Planta",
+    "Usuario",
+    "TransaccionIntensidadEnergia",
+    "EncuestaPlanta",
+    "Transaccion"
+  ],
+  "hasCycles": false,
+  "cyclicModels": [],
+  "dependencies": {
+    "ArchivoAdjunto": {
+      "relations": [],
+      "dependsOn": []
+    },
+    "CargaMasivaArchivo": {
+      "relations": [],
+      "dependsOn": []
+    },
+    "CargaMasivaDetalle": {
+      "relations": [
+        {
+          "field": "cargaMasivaArchivoId",
+          "relatedModel": "CargaMasivaArchivo",
+          "foreignKey": "cargaMasivaArchivoId",
+          "inferred": true
+        }
+      ],
+      "dependsOn": [
+        "CargaMasivaArchivo"
+      ]
+    },
+    "CargaMasivaError": {
+      "relations": [
+        {
+          "field": "cargaMasivaArchivoId",
+          "relatedModel": "CargaMasivaArchivo",
+          "foreignKey": "cargaMasivaArchivoId",
+          "inferred": true
+        },
+        {
+          "field": "cargaMasivaDetalleId",
+          "relatedModel": "CargaMasivaDetalle",
+          "foreignKey": "cargaMasivaDetalleId",
+          "inferred": true
+        },
+        {
+          "field": "empresaId",
+          "relatedModel": "Empresa",
+          "foreignKey": "empresaId",
+          "inferred": true
+        }
+      ],
+      "dependsOn": [
+        "CargaMasivaArchivo",
+        "CargaMasivaDetalle",
+        "Empresa"
+      ]
+    },
+    "CategoriaTransaccion": {
+      "relations": [
+        {
+          "field": "formularioId",
+          "relatedModel": "Formulario",
+          "foreignKey": "formularioId",
+          "inferred": true
+        }
+      ],
+      "dependsOn": [
+        "Formulario"
+      ]
+    },
+    "Comuna": {
+      "relations": [
+        {
+          "field": "provinciaId",
+          "relatedModel": "Provincia",
+          "foreignKey": "provinciaId",
+          "inferred": true
+        },
+        {
+          "field": "regionId",
+          "relatedModel": "Region",
+          "foreignKey": "regionId",
+          "inferred": true
+        }
+      ],
+      "dependsOn": [
+        "Provincia",
+        "Region"
+      ]
+    },
+    "Contacto": {
+      "relations": [
+        {
+          "field": "empresaId",
+          "relatedModel": "Empresa",
+          "foreignKey": "empresaId",
+          "inferred": true
+        },
+        {
+          "field": "tipoContactoId",
+          "relatedModel": "TipoContacto",
+          "foreignKey": "tipoContactoId",
+          "inferred": true
+        }
+      ],
+      "dependsOn": [
+        "Empresa",
+        "TipoContacto"
+      ]
+    },
+    "EmailConfig": {
+      "relations": [
+        {
+          "field": "estadoEmailId",
+          "relatedModel": "EstadoEmail",
+          "foreignKey": "estadoEmailId",
+          "inferred": true
+        },
+        {
+          "field": "encuestaId",
+          "relatedModel": "Encuesta",
+          "foreignKey": "encuestaId",
+          "inferred": true
+        }
+      ],
+      "dependsOn": [
+        "EstadoEmail",
+        "Encuesta"
+      ]
+    },
+    "EmailLogs": {
+      "relations": [
+        {
+          "field": "emailConfigId",
+          "relatedModel": "EmailConfig",
+          "foreignKey": "emailConfigId",
+          "inferred": true
+        },
+        {
+          "field": "empresaId",
+          "relatedModel": "Empresa",
+          "foreignKey": "empresaId",
+          "inferred": true
+        }
+      ],
+      "dependsOn": [
+        "EmailConfig",
+        "Empresa"
+      ]
+    },
+    "Empresa": {
+      "relations": [
+        {
+          "field": "sectorEnergeticoId",
+          "relatedModel": "SectorEnergetico",
+          "foreignKey": "sectorEnergeticoId",
+          "inferred": true
+        },
+        {
+          "field": "sectorEconomicoId",
+          "relatedModel": "SectorEconomico",
+          "foreignKey": "sectorEconomicoId",
+          "inferred": true
+        },
+        {
+          "field": "subSectorEconomicoId",
+          "relatedModel": "SubSectorEconomico",
+          "foreignKey": "subSectorEconomicoId",
+          "inferred": true
+        },
+        {
+          "field": "sectorEconomicoSiiId",
+          "relatedModel": "SectorEconomicoSii",
+          "foreignKey": "sectorEconomicoSiiId",
+          "inferred": true
+        }
+      ],
+      "dependsOn": [
+        "SectorEnergetico",
+        "SectorEconomico",
+        "SubSectorEconomico",
+        "SectorEconomicoSii"
+      ]
+    },
+    "Encuesta": {
+      "relations": [],
+      "dependsOn": []
+    },
+    "EncuestaEmpresa": {
+      "relations": [
+        {
+          "field": "empresaId",
+          "relatedModel": "Empresa",
+          "foreignKey": "empresaId",
+          "inferred": true
+        },
+        {
+          "field": "encuestaId",
+          "relatedModel": "Encuesta",
+          "foreignKey": "encuestaId",
+          "inferred": true
+        },
+        {
+          "field": "estadoEmpresaId",
+          "relatedModel": "EstadoEmpresa",
+          "foreignKey": "estadoEmpresaId",
+          "inferred": true
+        }
+      ],
+      "dependsOn": [
+        "Empresa",
+        "Encuesta",
+        "EstadoEmpresa"
+      ]
+    },
+    "EncuestaPlanta": {
+      "relations": [
+        {
+          "field": "encuestaId",
+          "relatedModel": "Encuesta",
+          "foreignKey": "encuestaId",
+          "inferred": true
+        },
+        {
+          "field": "plantaId",
+          "relatedModel": "Planta",
+          "foreignKey": "plantaId",
+          "inferred": true
+        },
+        {
+          "field": "estadoProcesoId",
+          "relatedModel": "EstadoProceso",
+          "foreignKey": "estadoProcesoId",
+          "inferred": true
+        }
+      ],
+      "dependsOn": [
+        "Encuesta",
+        "Planta",
+        "EstadoProceso"
+      ]
+    },
+    "Energetico": {
+      "relations": [
+        {
+          "field": "densidadUnidadMedidaId",
+          "relatedModel": "DensidadUnidadMedida",
+          "foreignKey": "densidadUnidadMedidaId",
+          "inferred": true
+        },
+        {
+          "field": "poderCalorificoUMedidaId",
+          "relatedModel": "PoderCalorificoUMedida",
+          "foreignKey": "poderCalorificoUMedidaId",
+          "inferred": true
+        },
+        {
+          "field": "energeticoGrupoId",
+          "relatedModel": "EnergeticoGrupo",
+          "foreignKey": "energeticoGrupoId",
+          "inferred": true
+        }
+      ],
+      "dependsOn": []
+    },
+    "EnergeticoGrupos": {
+      "relations": [],
+      "dependsOn": []
+    },
+    "EnergeticoUnidadMedida": {
+      "relations": [
+        {
+          "field": "energeticoId",
+          "relatedModel": "Energetico",
+          "foreignKey": "energeticoId",
+          "inferred": true
+        },
+        {
+          "field": "unidadMedidaId",
+          "relatedModel": "UnidadMedida",
+          "foreignKey": "unidadMedidaId",
+          "inferred": true
+        }
+      ],
+      "dependsOn": [
+        "Energetico",
+        "UnidadMedida"
+      ]
+    },
+    "EstadoEmail": {
+      "relations": [],
+      "dependsOn": []
+    },
+    "EstadoEmpresa": {
+      "relations": [],
+      "dependsOn": []
+    },
+    "EstadoProceso": {
+      "relations": [],
+      "dependsOn": []
+    },
+    "EstadoReporte": {
+      "relations": [],
+      "dependsOn": []
+    },
+    "FactorConversion": {
+      "relations": [
+        {
+          "field": "uOrigenId",
+          "relatedModel": "UOrigen",
+          "foreignKey": "uOrigenId",
+          "inferred": true
+        },
+        {
+          "field": "uDestinoId",
+          "relatedModel": "UDestino",
+          "foreignKey": "uDestinoId",
+          "inferred": true
+        }
+      ],
+      "dependsOn": []
+    },
+    "Formulario": {
+      "relations": [],
+      "dependsOn": []
+    },
+    "IntensidadEnergEncuestaEmpresa": {
+      "relations": [
+        {
+          "field": "empresaId",
+          "relatedModel": "Empresa",
+          "foreignKey": "empresaId",
+          "inferred": true
+        },
+        {
+          "field": "encuestaId",
+          "relatedModel": "Encuesta",
+          "foreignKey": "encuestaId",
+          "inferred": true
+        }
+      ],
+      "dependsOn": [
+        "Empresa",
+        "Encuesta"
+      ]
+    },
+    "Pais": {
+      "relations": [],
+      "dependsOn": []
+    },
+    "Planta": {
+      "relations": [
+        {
+          "field": "comunaId",
+          "relatedModel": "Comuna",
+          "foreignKey": "comunaId",
+          "inferred": true
+        },
+        {
+          "field": "empresaId",
+          "relatedModel": "Empresa",
+          "foreignKey": "empresaId",
+          "inferred": true
+        }
+      ],
+      "dependsOn": [
+        "Comuna",
+        "Empresa"
+      ]
+    },
+    "Provincia": {
+      "relations": [
+        {
+          "field": "regionId",
+          "relatedModel": "Region",
+          "foreignKey": "regionId",
+          "inferred": true
+        }
+      ],
+      "dependsOn": [
+        "Region"
+      ]
+    },
+    "Region": {
+      "relations": [],
+      "dependsOn": []
+    },
+    "Reporte": {
+      "relations": [
+        {
+          "field": "estadoReporteId",
+          "relatedModel": "EstadoReporte",
+          "foreignKey": "estadoReporteId",
+          "inferred": true
+        },
+        {
+          "field": "encuestaId",
+          "relatedModel": "Encuesta",
+          "foreignKey": "encuestaId",
+          "inferred": true
+        }
+      ],
+      "dependsOn": [
+        "EstadoReporte",
+        "Encuesta"
+      ]
+    },
+    "Role": {
+      "relations": [],
+      "dependsOn": []
+    },
+    "SectorEconomico": {
+      "relations": [],
+      "dependsOn": []
+    },
+    "SectorEconomicoSii": {
+      "relations": [],
+      "dependsOn": []
+    },
+    "SectorEnergetico": {
+      "relations": [],
+      "dependsOn": []
+    },
+    "SubSectorEconomico": {
+      "relations": [
+        {
+          "field": "sectorEconomicoId",
+          "relatedModel": "SectorEconomico",
+          "foreignKey": "sectorEconomicoId",
+          "inferred": true
+        }
+      ],
+      "dependsOn": [
+        "SectorEconomico"
+      ]
+    },
+    "Tecnologia": {
+      "relations": [],
+      "dependsOn": []
+    },
+    "TipoContacto": {
+      "relations": [],
+      "dependsOn": []
+    },
+    "TipoOtroUso": {
+      "relations": [],
+      "dependsOn": []
+    },
+    "TipoPerdida": {
+      "relations": [],
+      "dependsOn": []
+    },
+    "TipoTransporte": {
+      "relations": [],
+      "dependsOn": []
+    },
+    "TipoUsoProceso": {
+      "relations": [],
+      "dependsOn": []
+    },
+    "Transaccion": {
+      "relations": [
+        {
+          "field": "categoriaTransaccionId",
+          "relatedModel": "CategoriaTransaccion",
+          "foreignKey": "categoriaTransaccionId",
+          "inferred": true
+        },
+        {
+          "field": "energeticoInId",
+          "relatedModel": "EnergeticoIn",
+          "foreignKey": "energeticoInId",
+          "inferred": true
+        },
+        {
+          "field": "energeticoOutId",
+          "relatedModel": "EnergeticoOut",
+          "foreignKey": "energeticoOutId",
+          "inferred": true
+        },
+        {
+          "field": "formularioId",
+          "relatedModel": "Formulario",
+          "foreignKey": "formularioId",
+          "inferred": true
+        },
+        {
+          "field": "plantaId",
+          "relatedModel": "Planta",
+          "foreignKey": "plantaId",
+          "inferred": true
+        },
+        {
+          "field": "encuestaId",
+          "relatedModel": "Encuesta",
+          "foreignKey": "encuestaId",
+          "inferred": true
+        },
+        {
+          "field": "unidadMedidaInId",
+          "relatedModel": "UnidadMedidaIn",
+          "foreignKey": "unidadMedidaInId",
+          "inferred": true
+        },
+        {
+          "field": "unidadMedidaOutId",
+          "relatedModel": "UnidadMedidaOut",
+          "foreignKey": "unidadMedidaOutId",
+          "inferred": true
+        },
+        {
+          "field": "regionDestId",
+          "relatedModel": "RegionDest",
+          "foreignKey": "regionDestId",
+          "inferred": true
+        },
+        {
+          "field": "sectorEconomicoDestId",
+          "relatedModel": "SectorEconomicoDest",
+          "foreignKey": "sectorEconomicoDestId",
+          "inferred": true
+        },
+        {
+          "field": "subSectorEconomicoDestId",
+          "relatedModel": "SubSectorEconomicoDest",
+          "foreignKey": "subSectorEconomicoDestId",
+          "inferred": true
+        },
+        {
+          "field": "tecnologiaId",
+          "relatedModel": "Tecnologia",
+          "foreignKey": "tecnologiaId",
+          "inferred": true
+        },
+        {
+          "field": "unidadMedidaNoAprovechadaId",
+          "relatedModel": "UnidadMedidaNoAprovechada",
+          "foreignKey": "unidadMedidaNoAprovechadaId",
+          "inferred": true
+        },
+        {
+          "field": "unidadMedidaCapInstaladaId",
+          "relatedModel": "UnidadMedidaCapInstalada",
+          "foreignKey": "unidadMedidaCapInstaladaId",
+          "inferred": true
+        },
+        {
+          "field": "paisId",
+          "relatedModel": "Pais",
+          "foreignKey": "paisId",
+          "inferred": true
+        }
+      ],
+      "dependsOn": [
+        "CategoriaTransaccion",
+        "Formulario",
+        "Planta",
+        "Encuesta",
+        "Tecnologia",
+        "Pais"
+      ]
+    },
+    "TransaccionIntensidadEnergia": {
+      "relations": [
+        {
+          "field": "formularioId",
+          "relatedModel": "Formulario",
+          "foreignKey": "formularioId",
+          "inferred": true
+        },
+        {
+          "field": "intensidadEnergEncuestaEmpresaId",
+          "relatedModel": "IntensidadEnergEncuestaEmpresa",
+          "foreignKey": "intensidadEnergEncuestaEmpresaId",
+          "inferred": true
+        }
+      ],
+      "dependsOn": [
+        "Formulario",
+        "IntensidadEnergEncuestaEmpresa"
+      ]
+    },
+    "UnidadMedida": {
+      "relations": [
+        {
+          "field": "destinoId",
+          "relatedModel": "Destino",
+          "foreignKey": "destinoId",
+          "inferred": true
+        },
+        {
+          "field": "origenId",
+          "relatedModel": "Origen",
+          "foreignKey": "origenId",
+          "inferred": true
+        }
+      ],
+      "dependsOn": []
+    },
+    "Users": {
+      "relations": [],
+      "dependsOn": []
+    },
+    "Usuario": {
+      "relations": [
+        {
+          "field": "empresaId",
+          "relatedModel": "Empresa",
+          "foreignKey": "empresaId",
+          "inferred": true
+        }
+      ],
+      "dependsOn": [
+        "Empresa"
+      ]
+    },
+    "UsuarioRole": {
+      "relations": [
+        {
+          "field": "userId",
+          "relatedModel": "User",
+          "foreignKey": "userId",
+          "inferred": true
+        },
+        {
+          "field": "roleId",
+          "relatedModel": "Role",
+          "foreignKey": "roleId",
+          "inferred": true
+        }
+      ],
+      "dependsOn": [
+        "Role"
+      ]
+    }
+  }
+}
