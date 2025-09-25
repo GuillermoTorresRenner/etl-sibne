@@ -1,6 +1,6 @@
 {
-  "timestamp": "2025-09-25T13:46:13.942Z",
-  "totalModels": 45,
+  "timestamp": "2025-09-25T16:56:39.275Z",
+  "totalModels": 46,
   "independentModels": [
     "ArchivoAdjunto",
     "CargaMasivaArchivo",
@@ -23,12 +23,14 @@
     "TipoPerdida",
     "TipoTransporte",
     "TipoUsoProceso",
-    "Users"
+    "Usuario"
   ],
   "dependentModels": [
     "Energetico",
     "FactorConversion",
     "UnidadMedida",
+    "UsuarioLogin",
+    "UsuarioToken",
     "CargaMasivaDetalle",
     "EmailConfig",
     "Reporte",
@@ -45,7 +47,6 @@
     "EncuestaEmpresa",
     "IntensidadEnergEncuestaEmpresa",
     "Planta",
-    "Usuario",
     "TransaccionIntensidadEnergia",
     "EncuestaPlanta",
     "Transaccion"
@@ -75,7 +76,9 @@
     "TipoTransporte",
     "TipoUsoProceso",
     "UnidadMedida",
-    "Users",
+    "Usuario",
+    "UsuarioLogin",
+    "UsuarioToken",
     "CargaMasivaDetalle",
     "EmailConfig",
     "Reporte",
@@ -92,7 +95,6 @@
     "EncuestaEmpresa",
     "IntensidadEnergEncuestaEmpresa",
     "Planta",
-    "Usuario",
     "TransaccionIntensidadEnergia",
     "EncuestaPlanta",
     "Transaccion"
@@ -690,22 +692,20 @@
       ],
       "dependsOn": []
     },
-    "Users": {
+    "Usuario": {
       "relations": [],
       "dependsOn": []
     },
-    "Usuario": {
+    "UsuarioLogin": {
       "relations": [
         {
-          "field": "empresaId",
-          "relatedModel": "Empresa",
-          "foreignKey": "empresaId",
+          "field": "userId",
+          "relatedModel": "User",
+          "foreignKey": "userId",
           "inferred": true
         }
       ],
-      "dependsOn": [
-        "Empresa"
-      ]
+      "dependsOn": []
     },
     "UsuarioRole": {
       "relations": [
@@ -725,6 +725,17 @@
       "dependsOn": [
         "Role"
       ]
+    },
+    "UsuarioToken": {
+      "relations": [
+        {
+          "field": "userId",
+          "relatedModel": "User",
+          "foreignKey": "userId",
+          "inferred": true
+        }
+      ],
+      "dependsOn": []
     }
   }
 }

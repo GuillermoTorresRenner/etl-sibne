@@ -24,7 +24,7 @@ model Usuario {
   primerIngreso          Boolean
   
   // Relaciones
-  roles                  Role[] @relation("UsuarioRoles")
+  usuarioRoles           UsuarioRole[]
   logins                 UsuarioLogin[]
   tokens                 UsuarioToken[]
   // NOTA: Campos mantienen nombres tal como están definidos

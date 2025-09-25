@@ -13,7 +13,6 @@ model Empresa {
   sectorEconomicoSiiId        Int?
   instensidadEnergiaFormObligada Boolean
 
-  usuario                     Usuario? @relation("EmpresaUsuario")
   sectorEnergetico            SectorEnergetico   @relation(fields: [sectorEnergeticoId], references: [id])
   sectorEconomico             SectorEconomico    @relation(fields: [sectorEconomicoId], references: [id])
   subSectorEconomico          SubSectorEconomico @relation(fields: [subSectorEconomicoId], references: [id])

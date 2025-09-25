@@ -6,5 +6,5 @@ model Role {
   concurrencyStamp       String?
   
   // Relaciones muchos a muchos con usuarios
-  usuarios               Usuario[] @relation("UsuarioRoles")
+  usuarioRoles           UsuarioRole[]
 }

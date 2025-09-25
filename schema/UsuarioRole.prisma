@@ -1,0 +1,12 @@
+//REVISADO - Tabla intermedia explícita para relación Usuario-Role
+model UsuarioRole {
+  userId                 String @map("UserId")  // Mapea userId de Prisma → UserId de PostgreSQL
+  roleId                 String @map("RoleId")  // Mapea roleId de Prisma → RoleId de PostgreSQL
+  
+  // Relaciones
+  usuario                Usuario @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role                   Role    @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  
+  @@id([userId, roleId])
+  @@map("UsuarioRole")
+}

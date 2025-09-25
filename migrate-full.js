@@ -90,12 +90,11 @@ const ALL_TABLES = [
 // � MAPEO DE NOMBRES DE TABLAS
 // Mapeo de nombres Prisma (destino) -> nombres SQL Server (origen)
 const TABLE_NAME_MAPPING = {
-  "Usuario": "AspNetUsers",
-  "Role": "AspNetRoles", 
-  "UsuarioLogin": "AspNetUserLogins",
-  "UsuarioToken": "AspNetUserTokens",
-  // NOTA: UsuarioRole NO se incluye porque Prisma maneja la relación many-to-many automáticamente
-  // Los datos de AspNetUserRoles se migran a través de la tabla implícita _UsuarioRoles que crea Prisma
+  Usuario: "AspNetUsers",
+  Role: "AspNetRoles",
+  UsuarioRole: "AspNetUserRoles", // Tabla intermedia explícita
+  UsuarioLogin: "AspNetUserLogins",
+  UsuarioToken: "AspNetUserTokens",
 };
 
 // �🚧 TABLAS QUE NO EXISTEN EN LA BD ORIGINAL
@@ -103,7 +102,7 @@ const TABLE_NAME_MAPPING = {
 const DEV_TABLES_TO_EXCLUDE = [
   "Users", // Tabla obsoleta
   "Encuesta",
-  "EncuestaEmpresa", 
+  "EncuestaEmpresa",
   "EncuestaPlanta",
   "IntensidadEnergEncuestaEmpresa",
 ];
@@ -118,7 +117,10 @@ async function extractTableToCSV(sqlPool, tableName) {
   try {
     // Usar el mapeo de nombres si existe, sino usar el nombre original
     const sourceTableName = TABLE_NAME_MAPPING[tableName] || tableName;
-    const tableInfo = sourceTableName !== tableName ? `${tableName} (${sourceTableName})` : tableName;
+    const tableInfo =
+      sourceTableName !== tableName
+        ? `${tableName} (${sourceTableName})`
+        : tableName;
     const query = `SELECT * FROM dbo.${sourceTableName}`;
     const result = await sqlPool.request().query(query);
 
