@@ -1,9 +1,0 @@
-//REVISADO
-model EstadoEmpresa {
-  id               Int    @id @default(autoincrement())
-  nombre           String
-
-  encuestaEmpresas EncuestaEmpresa[]
-
-  @@map("EstadoEmpresa")
-}

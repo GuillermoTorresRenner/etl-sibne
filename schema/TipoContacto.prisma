@@ -1,9 +1,0 @@
-//REVISADO
-model TipoContacto {
-  id       Int      @id @default(autoincrement())
-  nombre   String
-
-  contactos Contacto[]
-
-  @@map("TipoContacto")
-}

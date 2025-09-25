@@ -190,19 +190,36 @@ class MigrationReportGenerator {
   /**
    * Genera el reporte completo en Markdown
    */
-  async generateReport() {
+  async generateReport(migrationStats = {}) {
     console.log("🔍 Analizando datos de migración...");
+
+    // Usar estadísticas pasadas desde migrate-full.js si están disponibles
+    const {
+      extractedCount = null,
+      emptyTablesCount = null,
+      failedCount = null,
+      duration = null,
+      totalTables = null,
+    } = migrationStats;
 
     const etlData = await this.analyzeETLLogs();
     const binaryData = await this.analyzeBinaryFiles();
 
     console.log("📊 Generando reporte...");
 
+    // Usar estadísticas reales si están disponibles, sino usar análisis de logs
+    const actualExtracted =
+      extractedCount !== null ? extractedCount : etlData.successfulMigrations;
+    const actualTotal =
+      totalTables !== null ? totalTables : etlData.totalTables;
+    const actualEmpty = emptyTablesCount !== null ? emptyTablesCount : 0;
+    const actualFailed = failedCount !== null ? failedCount : etlData.errors;
+
+    // El éxito incluye tanto tablas migradas como tablas vacías (ambas procesadas correctamente)
+    const successfullyProcessed = actualExtracted + actualEmpty;
     const successRate =
-      etlData.totalTables > 0
-        ? ((etlData.successfulMigrations / etlData.totalTables) * 100).toFixed(
-            1
-          )
+      actualTotal > 0
+        ? ((successfullyProcessed / actualTotal) * 100).toFixed(1)
         : "0.0";
 
     const report = `# 📋 Reporte de Migración ETL - SIBNE
@@ -218,9 +235,13 @@ class MigrationReportGenerator {
 
 | Métrica | Valor | Estado |
 |---------|-------|--------|
-| **Tablas Migradas** | ${etlData.successfulMigrations}/${
-      etlData.totalTables
-    } | ${
+| **Tablas con Datos Migradas** | ${actualExtracted} | ${
+      actualExtracted > 0 ? "✅ Migradas" : "➖ Ninguna"
+    } |
+| **Tablas Vacías (Omitidas)** | ${actualEmpty} | ${
+      actualEmpty > 0 ? "⏭️ Procesadas" : "➖ Ninguna"
+    } |
+| **Total Procesadas** | ${successfullyProcessed}/${actualTotal} | ${
       successRate >= 95
         ? "✅ Excelente"
         : successRate >= 80
@@ -234,8 +255,8 @@ class MigrationReportGenerator {
       binaryData.totalFiles > 0 ? "✅ Migrados" : "⚠️ Sin archivos"
     } |
 | **Tamaño Total** | ${binaryData.totalSize} | 📁 Espacio utilizado |
-| **Errores Detectados** | ${etlData.errors} | ${
-      etlData.errors === 0 ? "🟢 Sin errores" : "🔴 Revisar logs"
+| **Errores Reales** | ${actualFailed} | ${
+      actualFailed === 0 ? "🟢 Sin errores" : "🔴 Revisar logs"
     } |
 
 ---
@@ -244,7 +265,8 @@ class MigrationReportGenerator {
 
 ### 1️⃣ **Migración de Datos Estructurados**
 - ✅ **SQL Server → PostgreSQL**
-- ✅ **${etlData.totalTables} tablas procesadas**
+- ✅ **${actualExtracted} tablas con datos migradas**
+- ⏭️ **${actualEmpty} tablas vacías omitidas correctamente**
 - ✅ **Esquema dbo implementado**
 - ✅ **Validación de integridad completada**
 

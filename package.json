@@ -5,9 +5,10 @@
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "migrate": "node migrate-full.js",
+    "migrate": "node src/scripts/migrate-full.js",
     "analyze:schema": "node src/analyzers/analyze-prisma-schema.js",
     "process:files": "node src/processors/extract-archivo-adjunto.js",
+    "generate:report": "node src/scripts/generate-migration-report.js",
     "test": "node src/test-conexion.js conexion"
   },
   "dependencies": {

@@ -15,8 +15,8 @@ import path from "path";
 import fs from "fs";
 import sql from "mssql";
 import dotenv from "dotenv";
-import { logger } from "./src/utils/logger.js";
-import MigrationReportGenerator from "./src/scripts/generate-migration-report.js";
+import { logger } from "../utils/logger.js";
+import MigrationReportGenerator from "./generate-migration-report.js";
 
 dotenv.config();
 
@@ -80,7 +80,6 @@ const ALL_TABLES = [
   "Transaccion",
   "TransaccionIntensidadEnergia",
   "UnidadMedida",
-  "Users",
   "Usuario",
   "UsuarioLogin",
   "UsuarioRole",
@@ -100,7 +99,7 @@ const TABLE_NAME_MAPPING = {
 // �🚧 TABLAS QUE NO EXISTEN EN LA BD ORIGINAL
 // Estas tablas NO están en la base de datos de SQL Server
 const DEV_TABLES_TO_EXCLUDE = [
-  "Users", // Tabla obsoleta
+  // "Users" eliminada de la base de datos para evitar conflictos
   "Encuesta",
   "EncuestaEmpresa",
   "EncuestaPlanta",
@@ -125,9 +124,9 @@ async function extractTableToCSV(sqlPool, tableName) {
     const result = await sqlPool.request().query(query);
 
     if (result.recordset.length === 0) {
-      console.log(`⚠️  Tabla ${tableInfo}: Sin datos`);
-      logger.warn(`Tabla ${tableInfo} sin datos`);
-      return false;
+      console.log(`⏭️  Tabla ${tableInfo}: Sin datos (omitida)`);
+      logger.info(`Tabla ${tableInfo} sin datos - omitida correctamente`);
+      return "empty";
     }
 
     // Crear CSV
@@ -170,11 +169,11 @@ async function extractTableToCSV(sqlPool, tableName) {
     logger.info(
       `Tabla ${tableInfo} extraída: ${result.recordset.length} registros`
     );
-    return true;
+    return "success";
   } catch (error) {
     console.error(`❌ Error extrayendo tabla ${tableName}:`, error.message);
     logger.error(`Error extrayendo tabla ${tableName}`, error);
-    return false;
+    return "error";
   }
 }
 
@@ -212,6 +211,7 @@ async function runFullMigration() {
     logger.info("Conexión establecida con SQL Server");
 
     let extractedCount = 0;
+    let emptyTablesCount = 0;
     let failedCount = 0;
 
     // Asegurar que existe la carpeta Tablas
@@ -222,20 +222,23 @@ async function runFullMigration() {
 
     // Extraer cada tabla
     for (const tableName of TABLES_TO_EXTRACT) {
-      const success = await extractTableToCSV(sqlPool, tableName);
-      if (success) {
+      const result = await extractTableToCSV(sqlPool, tableName);
+      if (result === "success") {
         extractedCount++;
-      } else {
+      } else if (result === "empty") {
+        emptyTablesCount++;
+      } else if (result === "error") {
         failedCount++;
       }
     }
 
     console.log(`\n📈 Extracción completada:`);
-    console.log(`   ✅ Tablas extraídas: ${extractedCount}`);
-    console.log(`   ❌ Tablas fallidas: ${failedCount}`);
+    console.log(`   ✅ Tablas extraídas con datos: ${extractedCount}`);
+    console.log(`   ⏭️  Tablas omitidas (sin datos): ${emptyTablesCount}`);
+    console.log(`   ❌ Tablas con errores: ${failedCount}`);
 
     logger.info(
-      `Extracción completada: ${extractedCount} exitosas, ${failedCount} fallidas`
+      `Extracción completada: ${extractedCount} exitosas, ${emptyTablesCount} vacías, ${failedCount} con errores`
     );
 
     // Cerrar conexión SQL Server
@@ -247,7 +250,7 @@ async function runFullMigration() {
     logger.info("PASO 2: Iniciando análisis de esquemas Prisma");
 
     const { default: analyzePrismaSchema } = await import(
-      "./src/analyzers/analyze-prisma-schema.js"
+      "../analyzers/analyze-prisma-schema.js"
     );
     // El analizador se ejecuta automáticamente al importarse
     logger.info("Análisis de esquemas Prisma completado");
@@ -257,7 +260,7 @@ async function runFullMigration() {
     logger.info("PASO 3: Iniciando migración a PostgreSQL");
 
     const { default: runPrismaMigration } = await import(
-      "./src/migrations/final-prisma-migration.js"
+      "../migrations/final-prisma-migration.js"
     );
     await runPrismaMigration();
     logger.info("Migración a PostgreSQL completada");
@@ -267,7 +270,7 @@ async function runFullMigration() {
     logger.info("PASO 4: Iniciando procesamiento de archivos binarios");
 
     const { default: extractArchivoAdjunto } = await import(
-      "./src/processors/extract-archivo-adjunto.js"
+      "../processors/extract-archivo-adjunto.js"
     );
     await extractArchivoAdjunto();
     logger.info("Procesamiento de archivos binarios completado");
@@ -283,6 +286,7 @@ async function runFullMigration() {
       const reportGenerator = new MigrationReportGenerator();
       const reportPath = await reportGenerator.generateReport({
         extractedCount,
+        emptyTablesCount,
         failedCount,
         duration,
         totalTables: TABLES_TO_EXTRACT.length,
@@ -298,7 +302,11 @@ async function runFullMigration() {
     console.log("\n🎉 ¡MIGRACIÓN COMPLETA FINALIZADA EXITOSAMENTE!");
     console.log("=".repeat(60));
     console.log("📊 Resumen final:");
-    console.log(`   - Tablas extraídas desde SQL Server: ${extractedCount}`);
+    console.log(`   - Tablas extraídas con datos: ${extractedCount}`);
+    console.log(`   - Tablas omitidas (vacías): ${emptyTablesCount}`);
+    if (failedCount > 0) {
+      console.log(`   - Tablas con errores: ${failedCount}`);
+    }
     console.log("   - Esquemas Prisma analizados: ✅");
     console.log("   - Migración PostgreSQL: ✅");
     console.log("   - Archivos binarios procesados: ✅");
@@ -308,7 +316,7 @@ async function runFullMigration() {
       `Migración completa finalizada exitosamente en ${duration} segundos`
     );
     logger.info(
-      `Resumen: ${extractedCount} tablas extraídas, ${failedCount} errores`
+      `Resumen: ${extractedCount} tablas extraídas, ${emptyTablesCount} tablas vacías, ${failedCount} errores`
     );
   } catch (error) {
     console.error("\n💥 ERROR en la migración completa:", error.message);

@@ -1,9 +1,0 @@
-//REVISADO
-model TipoUsoProceso {
-  id        Int    @id @default(autoincrement())
-  codigoStr String
-  nombre    String
-  orden     Int
-
-  @@map("TipoUsoProceso")
-}
