@@ -1,0 +1,10 @@
+//REVISADO - Estructura completa con nombres limpios
+model Role {
+  id                     String   @id
+  name                   String?
+  normalizedName         String?
+  concurrencyStamp       String?
+  
+  // Relaciones muchos a muchos con usuarios
+  usuarios               Usuario[] @relation("UsuarioRoles")
+}

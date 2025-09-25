@@ -1,0 +1,9 @@
+//REVISADO
+model EstadoEmail {
+  id         Int          @id @default(autoincrement())
+  nombre     String
+
+  emailConfig EmailConfig[]
+
+  @@map("EstadoEmail")
+}

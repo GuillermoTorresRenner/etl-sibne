@@ -1,0 +1,11 @@
+//REVISADO
+model EnergeticoUnidadMedida {
+  energeticoId   Int
+  unidadMedidaId Int
+
+  energetico     Energetico   @relation(fields: [energeticoId], references: [id])
+  unidadMedida   UnidadMedida @relation(fields: [unidadMedidaId], references: [id])
+
+  @@id([energeticoId, unidadMedidaId])
+  @@map("EnergeticoUnidadMedida")
+}

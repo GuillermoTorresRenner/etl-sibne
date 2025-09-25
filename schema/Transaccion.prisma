@@ -1,0 +1,63 @@
+//REVISADO
+model Transaccion {
+  id                          Int       @id @default(autoincrement())
+  cantidadIn                  Float
+  cantidadOut                 Float
+  cantidadTCalIn              Float
+  cantidadTCalOut             Float
+  categoriaTransaccionId      Int
+  energeticoInId              Int?
+  energeticoOutId             Int?
+  fechaIngreso                DateTime?
+  formularioId                Int
+  plantaId                    Int
+  encuestaId                  Int
+  unidadMedidaInId            Int?
+  unidadMedidaOutId           Int?
+  regionDestId                Int?
+  sectorEconomicoDestId       Int?
+  subSectorEconomicoDestId    Int?
+  cantPoderCalorifico         Float?
+  porcentajeHumedad           Float?
+  nombreEmpresaOrigen         String?
+  stockInicial                Float?
+  stockFinal                  Float?
+  nombreEmpresaDestino        String?
+  mercadoSpot                 Boolean?
+  localidad                   String?
+  tecnologiaId                Int?
+  unidadMedidaNoAprovechadaId Int?
+  cantidadNoAprovechada       Float?
+  unidadMedidaCapInstaladaId  Int?
+  cantidadCapInstalada        Float?
+  observacion                 String?
+  paisId                      Int?
+  subTecnologia               String?
+  detalle                     String?
+  subCategoria                String?
+  datos                       Json      @default("{}")
+
+  energeticoRegionDestId      Int?
+  energeticoRegionDest        Energetico? @relation("TransaccionRegionDest", fields: [energeticoRegionDestId], references: [id])
+
+  // Relaciones
+  planta               Planta              @relation(fields: [plantaId], references: [id])
+  encuesta             Encuesta            @relation(fields: [encuestaId], references: [id])
+  formulario           Formulario          @relation(fields: [formularioId], references: [id])
+  categoriaTransaccion CategoriaTransaccion @relation(fields: [categoriaTransaccionId], references: [id])
+
+  energeticoIn         Energetico?         @relation("EnergeticoIn", fields: [energeticoInId], references: [id])
+  energeticoOut        Energetico?         @relation("EnergeticoOut", fields: [energeticoOutId], references: [id])
+
+  unidadMedidaIn       UnidadMedida?       @relation("TransaccionUnidadMedidaIn", fields: [unidadMedidaInId], references: [id])
+  unidadMedidaOut      UnidadMedida?       @relation("TransaccionUnidadMedidaOut", fields: [unidadMedidaOutId], references: [id])
+  unidadMedidaNoAprovechada UnidadMedida?  @relation("TransaccionUnidadMedidaNoAprovechada", fields: [unidadMedidaNoAprovechadaId], references: [id])
+  unidadMedidaCapInstalada UnidadMedida?   @relation("UnidadMedidaCapInstalada", fields: [unidadMedidaCapInstaladaId], references: [id])
+
+  regionDest           Region?             @relation(fields: [regionDestId], references: [id])
+  sectorEconomicoDest  SectorEconomico?    @relation(fields: [sectorEconomicoDestId], references: [id])
+  subSectorEconomicoDest SubSectorEconomico? @relation(fields: [subSectorEconomicoDestId], references: [id])
+
+  tecnologia           Tecnologia?         @relation(fields: [tecnologiaId], references: [id])
+  pais                 Pais?               @relation(fields: [paisId], references: [id])
+}

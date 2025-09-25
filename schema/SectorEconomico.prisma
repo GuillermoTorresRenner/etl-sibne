@@ -1,0 +1,13 @@
+//REVISADO
+model SectorEconomico {
+  id           Int                 @id @default(autoincrement())
+  nombre       String
+  codigoStr    String
+  activo       Boolean
+
+  subSectorEconomicos SubSectorEconomico[]
+  empresas            Empresa[]
+  transaccionesDest   Transaccion[]
+
+  @@map("SectorEconomico")
+}

@@ -1,0 +1,28 @@
+//REVISADO
+model Empresa {
+  id                          String   @id
+  rut                         Int
+  dv                          String
+  nombre                      String
+  razonSocial                 String
+  direccion                   String
+  habilitado                  Boolean
+  sectorEnergeticoId          Int
+  sectorEconomicoId           Int
+  subSectorEconomicoId        Int
+  sectorEconomicoSiiId        Int?
+  instensidadEnergiaFormObligada Boolean
+
+  usuario                     Usuario? @relation("EmpresaUsuario")
+  sectorEnergetico            SectorEnergetico   @relation(fields: [sectorEnergeticoId], references: [id])
+  sectorEconomico             SectorEconomico    @relation(fields: [sectorEconomicoId], references: [id])
+  subSectorEconomico          SubSectorEconomico @relation(fields: [subSectorEconomicoId], references: [id])
+  sectorEconomicoSii          SectorEconomicoSii? @relation(fields: [sectorEconomicoSiiId], references: [id])
+  contactos                   Contacto[]
+  plantas                     Planta[]
+  encuestaEmpresa             EncuestaEmpresa[]
+  emailLogs                   EmailLogs[]
+  intensidadEnergEncuestaEmpresas IntensidadEnergEncuestaEmpresa[]
+
+  @@map("Empresa")
+}

@@ -3,7 +3,7 @@
 /**
  * SIBNE ETL - Script de Migración Completa con Extracción
  *
- * Este script realiza todo el proceso completo:
+ * Script realiza todo el proceso completo:
  * 1. Extrae datos desde SQL Server a CSV
  * 2. Analiza esquemas Prisma
  * 3. Ejecuta migración ordenada a PostgreSQL
@@ -82,29 +82,49 @@ const ALL_TABLES = [
   "UnidadMedida",
   "Users",
   "Usuario",
+  "UsuarioLogin",
   "UsuarioRole",
+  "UsuarioToken",
 ];
 
-// 🚧 TABLAS DE DESARROLLO - Excluir temporalmente
-// Estas tablas no existen en la BD original, son para pruebas de login
+// � MAPEO DE NOMBRES DE TABLAS
+// Mapeo de nombres Prisma (destino) -> nombres SQL Server (origen)
+const TABLE_NAME_MAPPING = {
+  "Usuario": "AspNetUsers",
+  "Role": "AspNetRoles", 
+  "UsuarioLogin": "AspNetUserLogins",
+  "UsuarioToken": "AspNetUserTokens",
+  // NOTA: UsuarioRole NO se incluye porque Prisma maneja la relación many-to-many automáticamente
+  // Los datos de AspNetUserRoles se migran a través de la tabla implícita _UsuarioRoles que crea Prisma
+};
+
+// �🚧 TABLAS QUE NO EXISTEN EN LA BD ORIGINAL
+// Estas tablas NO están en la base de datos de SQL Server
 const DEV_TABLES_TO_EXCLUDE = [
-  "Role",      // Enum UserRole para autenticación (nuevo)
-  "Users",     // Modelo Users para login/autenticación (nuevo)
-  // "Usuario" y "UsuarioRole" SÍ están en la BD original
+  "Users", // Tabla obsoleta
+  "Encuesta",
+  "EncuestaEmpresa", 
+  "EncuestaPlanta",
+  "IntensidadEnergEncuestaEmpresa",
 ];
 
 // Filtrar tablas que realmente existen en la BD original
-const TABLES_TO_EXTRACT = ALL_TABLES.filter(table => !DEV_TABLES_TO_EXCLUDE.includes(table));
+const TABLES_TO_EXTRACT = ALL_TABLES.filter(
+  (table) => !DEV_TABLES_TO_EXCLUDE.includes(table)
+);
 
 // Función para extraer tabla a CSV
 async function extractTableToCSV(sqlPool, tableName) {
   try {
-    const query = `SELECT * FROM dbo.${tableName}`;
+    // Usar el mapeo de nombres si existe, sino usar el nombre original
+    const sourceTableName = TABLE_NAME_MAPPING[tableName] || tableName;
+    const tableInfo = sourceTableName !== tableName ? `${tableName} (${sourceTableName})` : tableName;
+    const query = `SELECT * FROM dbo.${sourceTableName}`;
     const result = await sqlPool.request().query(query);
 
     if (result.recordset.length === 0) {
-      console.log(`⚠️  Tabla ${tableName}: Sin datos`);
-      logger.warn(`Tabla ${tableName} sin datos`);
+      console.log(`⚠️  Tabla ${tableInfo}: Sin datos`);
+      logger.warn(`Tabla ${tableInfo} sin datos`);
       return false;
     }
 
@@ -143,10 +163,10 @@ async function extractTableToCSV(sqlPool, tableName) {
     fs.writeFileSync(csvPath, csvContent, "utf8");
 
     console.log(
-      `✅ ${tableName}: ${result.recordset.length} registros extraídos`
+      `✅ ${tableInfo}: ${result.recordset.length} registros extraídos`
     );
     logger.info(
-      `Tabla ${tableName} extraída: ${result.recordset.length} registros`
+      `Tabla ${tableInfo} extraída: ${result.recordset.length} registros`
     );
     return true;
   } catch (error) {
@@ -170,11 +190,15 @@ async function runFullMigration() {
 
     // Mostrar información sobre tablas excluidas
     if (DEV_TABLES_TO_EXCLUDE.length > 0) {
-      console.log(`\n🚧 Tablas de desarrollo excluidas: ${DEV_TABLES_TO_EXCLUDE.length}`);
-      DEV_TABLES_TO_EXCLUDE.forEach(table => {
+      console.log(
+        `\n🚧 Tablas de desarrollo excluidas: ${DEV_TABLES_TO_EXCLUDE.length}`
+      );
+      DEV_TABLES_TO_EXCLUDE.forEach((table) => {
         console.log(`   - ${table} (no existe en BD original)`);
       });
-      logger.info(`Tablas de desarrollo excluidas: ${DEV_TABLES_TO_EXCLUDE.join(', ')}`);
+      logger.info(
+        `Tablas de desarrollo excluidas: ${DEV_TABLES_TO_EXCLUDE.join(", ")}`
+      );
     }
 
     // PASO 1: Conectar a SQL Server y extraer datos

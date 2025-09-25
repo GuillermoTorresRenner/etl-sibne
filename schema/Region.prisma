@@ -1,0 +1,12 @@
+//REVISADO
+model Region {
+  id       Int     @id @default(autoincrement())
+  nombre   String
+  numero   Int
+  posicion Int
+
+  comunas  Comuna[]
+  transaccionesDest  Transaccion[]
+
+  @@map("Region")
+}

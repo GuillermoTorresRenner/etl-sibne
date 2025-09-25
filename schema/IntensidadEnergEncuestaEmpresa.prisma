@@ -1,0 +1,14 @@
+//REVISADO
+model IntensidadEnergEncuestaEmpresa {
+  id                             Int      @id @default(autoincrement())
+  empresaId                      String
+  encuestaId                     Int
+  procesoTerminado               Boolean
+  fechaHoraRegistro              DateTime
+
+  empresa                        Empresa  @relation(fields: [empresaId], references: [id])
+  encuesta                       Encuesta @relation(fields: [encuestaId], references: [id])
+  transaccionesIntensidadEnergia TransaccionIntensidadEnergia[]
+
+  @@map("IntensidadEnergEncuestaEmpresa")
+}

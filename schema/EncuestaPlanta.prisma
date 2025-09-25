@@ -1,0 +1,17 @@
+//REVISADO
+model EncuestaPlanta {
+  encuestaId        Int
+  plantaId          Int
+  estadoProcesoId   Int
+  fechaAsignacion   DateTime
+  fechaInicio       DateTime?
+  fechaTransaccion  DateTime?
+  fechaFinalizacion DateTime?
+
+  encuesta          Encuesta      @relation(fields: [encuestaId], references: [id])
+  planta            Planta        @relation(fields: [plantaId], references: [id])
+  estadoProceso     EstadoProceso @relation(fields: [estadoProcesoId], references: [id])
+
+  @@id([encuestaId, plantaId])
+  @@map("EncuestaPlanta")
+}

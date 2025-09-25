@@ -1,0 +1,31 @@
+//REVISADO - Estructura completa con nombres limpios
+model Usuario {
+  id                     String   @id
+  userName               String?
+  normalizedUserName     String?
+  email                  String?
+  normalizedEmail        String?
+  emailConfirmed         Boolean
+  passwordHash           String?
+  securityStamp          String?
+  concurrencyStamp       String?
+  phoneNumber            String?
+  phoneNumberConfirmed   Boolean
+  twoFactorEnabled       Boolean
+  lockoutEnd             DateTime?
+  lockoutEnabled         Boolean
+  accessFailedCount      Int
+  
+  // Campos personalizados del sistema SIBNE
+  habilitado             Boolean
+  nombre                 String?
+  apellido               String?
+  eliminado              Boolean
+  primerIngreso          Boolean
+  
+  // Relaciones
+  roles                  Role[] @relation("UsuarioRoles")
+  logins                 UsuarioLogin[]
+  tokens                 UsuarioToken[]
+  // NOTA: Campos mantienen nombres tal como están definidos
+}

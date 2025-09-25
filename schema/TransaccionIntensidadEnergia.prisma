@@ -1,0 +1,14 @@
+//REVISADO
+model TransaccionIntensidadEnergia {
+  id                              Int      @id @default(autoincrement())
+  consumoEnergia                  Float
+  ventaMonetariaAnual             Float
+  unidad                          String
+  formularioId                    Int
+  fechaHoraRegistro               DateTime
+  intensidadEnergEncuestaEmpresaId Int
+
+  intensidadEnergEncuestaEmpresa  IntensidadEnergEncuestaEmpresa @relation(fields: [intensidadEnergEncuestaEmpresaId], references: [id])
+
+  @@map("TransaccionIntensidadEnergia")
+}

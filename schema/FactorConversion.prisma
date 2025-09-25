@@ -1,0 +1,12 @@
+//REVISADO
+model FactorConversion {
+  id        Int          @id @default(autoincrement())
+  factor    Float
+  uOrigenId Int
+  uDestinoId Int
+
+  uOrigen   UnidadMedida @relation("UOrigen", fields: [uOrigenId], references: [id])
+  uDestino  UnidadMedida @relation("UDestino", fields: [uDestinoId], references: [id])
+
+  @@map("FactorConversion")
+}

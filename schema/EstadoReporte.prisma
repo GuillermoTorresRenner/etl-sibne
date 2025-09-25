@@ -1,0 +1,9 @@
+//revisado
+model EstadoReporte {
+  id       Int      @id @default(autoincrement())
+  nombre   String
+
+  reportes Reporte[]
+
+  @@map("EstadoReporte")
+}

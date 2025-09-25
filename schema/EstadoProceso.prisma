@@ -1,0 +1,9 @@
+//REVISADO
+model EstadoProceso {
+  id              Int    @id @default(autoincrement())
+  nombre          String
+
+  encuestaPlantas EncuestaPlanta[]
+
+  @@map("EstadoProceso")
+}

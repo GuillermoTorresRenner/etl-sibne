@@ -1,0 +1,10 @@
+//REVISADO
+model TipoOtroUso {
+  id        Int    @id @default(autoincrement())
+  codigoStr String
+  nombre    String
+  activo    Boolean
+  orden     Int
+
+  @@map("TipoOtroUso")
+}

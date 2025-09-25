@@ -1,0 +1,8 @@
+//REVISADO
+model Provincia {
+  id       Int    @id @default(autoincrement())
+  regionId Int
+  nombre   String
+
+  @@map("Provincia")
+}

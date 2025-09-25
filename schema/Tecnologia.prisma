@@ -1,0 +1,8 @@
+//REVISADO
+model Tecnologia {
+  id     Int    @id @default(autoincrement())
+  nombre String
+  transacciones Transaccion[]
+
+  @@map("Tecnologia")
+}

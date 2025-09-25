@@ -1,0 +1,26 @@
+//REVISADO
+model UnidadMedida {
+  id                Int    @id @default(autoincrement())
+  codigoStr         String
+  nombre            String
+  tipoUnidad        String
+  destinoId         Int?
+  origenId          Int?
+  visibleSelect     Boolean
+
+  origen            UnidadMedida? @relation("Origen", fields: [origenId], references: [id])
+  origenes          UnidadMedida[] @relation("Origen")
+  destino           UnidadMedida? @relation("Destino", fields: [destinoId], references: [id])
+  destinos          UnidadMedida[] @relation("Destino")
+  energeticoUnidadMedida EnergeticoUnidadMedida[]
+  factoresOrigen    FactorConversion[] @relation("UOrigen")
+  factoresDestino   FactorConversion[] @relation("UDestino")
+  transaccionesIn            Transaccion[] @relation("TransaccionUnidadMedidaIn")
+  transaccionesOut           Transaccion[] @relation("TransaccionUnidadMedidaOut")
+  transaccionesNoAprovechada Transaccion[] @relation("TransaccionUnidadMedidaNoAprovechada")
+  poderCalorificoEnergeticos Energetico[] @relation("PoderCalorificoUMedida")
+  densidadEnergeticos        Energetico[] @relation("DensidadUMedida")
+  transaccionesCapInstalada   Transaccion[] @relation("UnidadMedidaCapInstalada")
+
+  @@map("UnidadMedida")
+}

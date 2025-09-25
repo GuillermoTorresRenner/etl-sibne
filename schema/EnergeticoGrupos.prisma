@@ -1,0 +1,9 @@
+//REVISADO
+model EnergeticoGrupos {
+  id      Int         @id @default(autoincrement())
+  nombre  String
+
+  energeticos Energetico[]
+
+  @@map("EnergeticoGrupos")
+}
