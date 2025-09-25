@@ -257,16 +257,6 @@ docker logs sqlserver-etl-sibne
 
 ---
 
-## 👥 Contribución
-
-1. Fork del proyecto
-2. Crear branch de feature (`git checkout -b feature/nueva-funcionalidad`)
-3. Commit cambios (`git commit -am 'Agregar nueva funcionalidad'`)
-4. Push al branch (`git push origin feature/nueva-funcionalidad`)
-5. Crear Pull Request
-
----
-
 ## 📄 Licencia
 
 Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para detalles.
@@ -281,6 +271,7 @@ Para problemas o preguntas:
 2. **Logs**: Revisar `logs/etl-combined.log` para detalles
 3. **Reportes**: Consultar `Reportes/MIGRATION_REPORT.md` para estadísticas
 4. **Documentación**: Este README y archivos en `CONTEXTO_DESARROLLO.md`
+5. **Contacto**: Enviar email a soporte@tchile.com
 
 ---
 
