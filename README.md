@@ -107,12 +107,12 @@ node src/scripts/migrate-full.js
 
 | Comando                   | Descripción                             | Archivo                                     |
 | ------------------------- | --------------------------------------- | ------------------------------------------- |
-| `npm run migrate`         | 🎯 **Migración completa** (recomendado) | `src/scripts/migrate-full.js`               |
-| `npm run migrate:full`    | Alias del comando anterior              | `src/scripts/migrate-full.js`               |
-| `npm run analyze:schema`  | Análisis de esquemas Prisma             | `src/analyzers/analyze-prisma-schema.js`    |
+| `npm run migrate`         | 🎯 **Migración completa** (recomendado) | `src/index.js` (ETLPipeline optimizado)     |
+| `npm run reset`           | 🧹 **Reset completo** - limpia directorios y DB | `src/scripts/reset.js`               |
+| `npm run compare-db`      | 📊 Comparar conteos SQL Server vs PostgreSQL | `src/scripts/compare-databases.js`    |
 | `npm run process:files`   | Procesamiento de archivos binarios      | `src/processors/extract-archivo-adjunto.js` |
 | `npm run generate:report` | Generar reporte de migración            | `src/scripts/generate-migration-report.js`  |
-| `npm run test`            | Probar conexiones a bases de datos      | `src/test-conexion.js`                      |
+| `npm run test-connections`| Probar conexiones a bases de datos      | `src/scripts/test-conexion.js`              |
 
 ---
 
@@ -284,15 +284,42 @@ Para problemas o preguntas:
 
 ---
 
+## 🧹 Comando Reset
+
+Para limpiar completamente el proyecto y preparar una nueva migración:
+
+```bash
+npm run reset
+```
+
+**¿Qué hace el reset?**
+- 🗂️ Limpia directorios: `logs/`, `Archivos/`, `Tablas/`, `Reportes/`
+- 🗄️ Elimina esquema `dbo` completo de PostgreSQL
+- ✅ Preserva archivos `.gitkeep` para Git
+- 📊 Muestra estadísticas detalladas de limpieza
+
+**Flujo típico:**
+```bash
+npm run reset      # Limpiar estado anterior
+npm run migrate    # Nueva migración limpia  
+npm run compare-db # Verificar resultados
+```
+
+Ver documentación completa en [`docs/RESET_COMMAND.md`](docs/RESET_COMMAND.md)
+
+---
+
 ## 🎯 Próximos Pasos
 
 Después de una migración exitosa:
 
-1. **Validar datos** en PostgreSQL
+1. **Validar datos** con `npm run compare-db`
 2. **Verificar archivos** en carpeta `Archivos/`
 3. **Revisar reporte** generado automáticamente
 4. **Configurar backend** para usar nuevos nombres de archivos
 5. **Realizar pruebas** de integridad final
+
+Para nueva migración: `npm run reset` y repetir proceso.
 
 ---
 

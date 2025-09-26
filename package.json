@@ -5,10 +5,10 @@
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "migrate": "node src/scripts/migrate-full.js",
-    "analyze:schema": "node src/analyzers/analyze-prisma-schema.js",
-    "process:files": "node src/processors/extract-archivo-adjunto.js",
-    "generate:report": "node src/scripts/generate-migration-report.js",
+    "migrate": "node src/index.js",
+    "reset": "node src/scripts/reset.js",
+    "extract-files": "node src/processors/extract-archivo-adjunto.js",
+    "generate-report": "node src/scripts/generate-migration-report.js",
     "compare-db": "node src/scripts/compare-databases.js",
     "test-connections": "node src/scripts/test-conexion.js conexion"
   },

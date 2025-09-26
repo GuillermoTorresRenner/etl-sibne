@@ -1,9 +1,9 @@
-import { SqlServerExtractor } from "./extractors/sqlserver-extractor.js";
-import { PostgreSQLLoader } from "./loaders/postgres-loader.js";
-import { config, validateConfig } from "./config/database.js";
-import { logger } from "./utils/logger.js";
+import { SqlServerExtractor } from "../extractors/sqlserver-extractor.js";
+import { PostgreSQLLoader } from "../loaders/postgres-loader.js";
+import { config, validateConfig } from "../config/database.js";
+import { logger } from "../utils/logger.js";
 import pLimit from "p-limit";
-import { ProgressBar } from "./utils/progress.js";
+import { ProgressBar } from "../utils/progress.js";
 
 /**
  * Pipeline ETL principal para migración SIBNE
