@@ -125,19 +125,27 @@ export class PostgreSQLLoader {
     try {
       await this.connect();
 
+      // Lista de tablas con métodos especializados - NO crear aquí
+      const specialTables = ["ArchivoAdjunto"];
+
+      if (specialTables.includes(tableName)) {
+        this.logger.info(
+          `⏭️ Saltando createTable para ${tableName} - tiene método especializado`
+        );
+        return;
+      }
+
       // Filtrar columnas binarias problemáticas
       const filteredColumns = columns.filter((col) => {
         // Adaptar tanto para esquema de getTableSchema (name, type) como para esquema tradicional (COLUMN_NAME, DATA_TYPE)
         const columnName = col.COLUMN_NAME || col.name;
         const dataType = col.DATA_TYPE || col.type;
-        
+
         const isBinary =
           this.BINARY_COLUMNS_TO_SKIP.some((skipCol) =>
             columnName.toLowerCase().includes(skipCol.toLowerCase())
           ) ||
-          ["binary", "varbinary", "image"].includes(
-            dataType.toLowerCase()
-          );
+          ["binary", "varbinary", "image"].includes(dataType.toLowerCase());
 
         if (isBinary) {
           logger.warn(
@@ -155,8 +163,9 @@ export class PostgreSQLLoader {
         const maxLength = col.CHARACTER_MAXIMUM_LENGTH || col.maxLength;
         const precision = col.NUMERIC_PRECISION || col.precision;
         const scale = col.NUMERIC_SCALE || col.scale;
-        const nullable = (col.IS_NULLABLE || col.nullable) === "YES" ? "" : " NOT NULL";
-        
+        const nullable =
+          (col.IS_NULLABLE || col.nullable) === "YES" ? "" : " NOT NULL";
+
         const pgType = this.mapDataType(dataType, maxLength, precision, scale);
         return `"${columnName}" ${pgType}${nullable}`;
       });
@@ -194,8 +203,8 @@ export class PostgreSQLLoader {
         `📥 Cargando datos desde CSV: ${csvPath} → ${schema}.${tableName}`
       );
 
-      // Truncar tabla antes de cargar
-      await client.query(`TRUNCATE TABLE "${schema}"."${tableName}"`);
+      // Limpiar tabla antes de cargar (usando DELETE para evitar problemas con FK)
+      await client.query(`DELETE FROM "${schema}"."${tableName}"`);
 
       // Leer archivo CSV y procesar línea por línea
       const csvData = [];
@@ -348,6 +357,180 @@ export class PostgreSQLLoader {
   }
 
   /**
+   * Cargar desde CSV con estrategia optimizada (inspirada en migrate-full.js)
+   */
+  async loadFromCSVOptimized(csvPath, tableName, columns, schema = "public") {
+    let client;
+
+    try {
+      await this.connect();
+      client = await this.pool.connect();
+
+      logger.info(
+        `📥 Cargando datos optimizado desde CSV: ${csvPath} → ${schema}.${tableName}`
+      );
+
+      // Usar DELETE en lugar de TRUNCATE para evitar problemas de FK
+      await client.query(`DELETE FROM "${schema}"."${tableName}"`);
+
+      // Leer archivo CSV completo
+      const csvData = [];
+
+      return new Promise((resolve, reject) => {
+        const fileStream = createReadStream(csvPath, { encoding: "utf8" });
+
+        fileStream
+          .pipe(parse({ headers: true, skipEmptyLines: true }))
+          .on("data", (row) => {
+            csvData.push(row);
+          })
+          .on("end", async () => {
+            try {
+              if (csvData.length === 0) {
+                logger.info(
+                  `⚠️ No hay datos para cargar en ${schema}.${tableName}`
+                );
+                client.release();
+                return resolve({ rowCount: 0, tableName, schema });
+              }
+
+              // Filtrar columnas binarias
+              const filteredColumns = columns.filter((col) => {
+                const isBinary =
+                  this.BINARY_COLUMNS_TO_SKIP.some((skipCol) =>
+                    col.COLUMN_NAME.toLowerCase().includes(
+                      skipCol.toLowerCase()
+                    )
+                  ) ||
+                  ["binary", "varbinary", "image"].includes(
+                    col.DATA_TYPE.toLowerCase()
+                  );
+                return !isBinary;
+              });
+
+              // Obtener las columnas reales de PostgreSQL para hacer el mapeo
+              const pgColumns = await this._getPostgreSQLColumns(
+                tableName,
+                schema
+              );
+
+              // Mapear columnas de CSV (SQL Server format) a PostgreSQL format
+              const columnMapping = this._createColumnMapping(
+                filteredColumns,
+                pgColumns,
+                csvData[0],
+                tableName
+              );
+
+              const pgColumnNames = Object.values(columnMapping);
+              const csvColumnNames = Object.keys(columnMapping);
+              const columnList = pgColumnNames.map((c) => `"${c}"`).join(", ");
+
+              // Preparar datos en lotes optimizados
+              const batchSize = 500; // Como en migrate-full.js
+              let totalInserted = 0;
+
+              for (let i = 0; i < csvData.length; i += batchSize) {
+                const batch = csvData.slice(i, i + batchSize);
+
+                // Construir placeholders para el batch completo
+                const placeholders = batch
+                  .map((_, rowIndex) => {
+                    const rowPlaceholders = pgColumnNames
+                      .map(
+                        (_, colIndex) =>
+                          `$${rowIndex * pgColumnNames.length + colIndex + 1}`
+                      )
+                      .join(", ");
+                    return `(${rowPlaceholders})`;
+                  })
+                  .join(", ");
+
+                const query = `INSERT INTO "${schema}"."${tableName}" (${columnList}) VALUES ${placeholders}`;
+
+                // Aplanar todos los valores del batch usando el mapeo de columnas
+                const values = batch.flatMap((row) =>
+                  csvColumnNames.map((csvColName) => {
+                    let value = row[csvColName];
+
+                    // Procesar valores NULL, booleanos y fechas
+                    if (value === null || value === undefined || value === "") {
+                      return null;
+                    }
+
+                    if (value === "true") return true;
+                    if (value === "false") return false;
+
+                    // Procesar fechas
+                    const hasDatePattern =
+                      /\d{4}-\d{2}-\d{2}/.test(value) ||
+                      /\d{2}\/\d{2}\/\d{4}/.test(value) ||
+                      value.includes("GMT");
+
+                    if (hasDatePattern && typeof value === "string") {
+                      try {
+                        let cleanDate = value
+                          .replace(/\s+\([^)]+\)$/, "")
+                          .replace(/gmt-0([34])00/gi, "GMT-0$1:00");
+
+                        const date = new Date(cleanDate);
+                        if (!isNaN(date.getTime())) {
+                          value = date.toISOString();
+                        } else {
+                          const simpleDate = cleanDate.replace(/\s+GMT.*$/, "");
+                          const fallbackDate = new Date(simpleDate);
+                          if (!isNaN(fallbackDate.getTime())) {
+                            value = fallbackDate.toISOString();
+                          }
+                        }
+                      } catch (dateError) {
+                        logger.warn(`⚠️ Error parseando fecha: ${value}`);
+                      }
+                    }
+
+                    return value;
+                  })
+                );
+
+                // Ejecutar INSERT batch
+                await client.query(query, values);
+                totalInserted += batch.length;
+
+                // Log de progreso cada 1000 registros
+                if (totalInserted % 1000 === 0) {
+                  logger.info(
+                    `📊 Procesadas ${totalInserted}/${csvData.length} filas...`
+                  );
+                }
+              }
+
+              client.release();
+              logger.info(
+                `✅ ${schema}.${tableName}: ${totalInserted} filas cargadas desde CSV (optimizado)`
+              );
+              resolve({ rowCount: totalInserted, tableName, schema });
+            } catch (insertError) {
+              client.release();
+              logger.error(`❌ Error en inserción optimizada:`, insertError);
+              reject(insertError);
+            }
+          })
+          .on("error", (error) => {
+            client.release();
+            reject(error);
+          });
+      });
+    } catch (error) {
+      if (client) client.release();
+      logger.error(
+        `❌ Error cargando CSV optimizado en ${schema}.${tableName}:`,
+        error
+      );
+      throw error;
+    }
+  }
+
+  /**
    * Cargar datos siempre vía CSV (requerimiento del usuario)
    */
   async loadFromStream(dataStream, tableName, columns, schema = "public") {
@@ -461,10 +644,109 @@ export class PostgreSQLLoader {
   async getRowCount(tableName) {
     try {
       await this.connect();
-      const result = await this.pool.query(`SELECT COUNT(*) as count FROM ${tableName}`);
+      const result = await this.pool.query(
+        `SELECT COUNT(*) as count FROM ${tableName}`
+      );
       return parseInt(result.rows[0].count);
     } catch (error) {
       logger.error(`❌ Error contando filas en ${tableName}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Obtener columnas reales de PostgreSQL
+   */
+  async _getPostgreSQLColumns(tableName, schema = "public") {
+    let client;
+    try {
+      await this.connect();
+      client = await this.pool.connect();
+
+      const query = `
+        SELECT column_name, data_type, is_nullable
+        FROM information_schema.columns 
+        WHERE table_name = $1 AND table_schema = $2
+        ORDER BY ordinal_position
+      `;
+
+      const result = await client.query(query, [tableName, schema]);
+      client.release();
+
+      return result.rows.map((row) => ({
+        name: row.column_name,
+        type: row.data_type,
+        nullable: row.is_nullable === "YES",
+      }));
+    } catch (error) {
+      if (client) client.release();
+      throw error;
+    }
+  }
+
+  /**
+   * Crear mapeo entre columnas de CSV y PostgreSQL
+   */
+  _createColumnMapping(
+    sqlServerColumns,
+    pgColumns,
+    csvRow,
+    tableName = "unknown"
+  ) {
+    const mapping = {};
+    const csvColumns = Object.keys(csvRow);
+
+    // Intentar mapear cada columna del CSV a PostgreSQL
+    csvColumns.forEach((csvCol) => {
+      // Buscar coincidencia exacta (case insensitive)
+      let pgCol = pgColumns.find(
+        (pg) => pg.name.toLowerCase() === csvCol.toLowerCase()
+      );
+
+      // Si no hay coincidencia exacta, buscar coincidencias similares
+      if (!pgCol) {
+        // Mapeos específicos conocidos
+        const knownMappings = {
+          Id: "id",
+          NombreArchivo: "nombreArchivo",
+          Tipo: "tipo",
+          Ext: "ext",
+        };
+
+        if (knownMappings[csvCol]) {
+          pgCol = pgColumns.find((pg) => pg.name === knownMappings[csvCol]);
+        }
+      }
+
+      // Si encontramos mapeo, agregarlo
+      if (pgCol) {
+        mapping[csvCol] = pgCol.name;
+      } else {
+        logger.warn(
+          `⚠️ No se pudo mapear columna CSV '${csvCol}' a PostgreSQL en tabla ${tableName}`
+        );
+      }
+    });
+
+    logger.info(
+      `🔗 Mapeo de columnas para ${tableName}: ${JSON.stringify(mapping)}`
+    );
+    return mapping;
+  }
+
+  /**
+   * Ejecutar query directo
+   */
+  async executeQuery(query) {
+    let client;
+    try {
+      await this.connect();
+      client = await this.pool.connect();
+      const result = await client.query(query);
+      client.release();
+      return result;
+    } catch (error) {
+      if (client) client.release();
       throw error;
     }
   }

@@ -105,14 +105,14 @@ node src/scripts/migrate-full.js
 
 ## 📊 Comandos Disponibles
 
-| Comando                   | Descripción                             | Archivo                                     |
-| ------------------------- | --------------------------------------- | ------------------------------------------- |
-| `npm run migrate`         | 🎯 **Migración completa** (recomendado) | `src/index.js` (ETLPipeline optimizado)     |
-| `npm run reset`           | 🧹 **Reset completo** - limpia directorios y DB | `src/scripts/reset.js`               |
-| `npm run compare-db`      | 📊 Comparar conteos SQL Server vs PostgreSQL | `src/scripts/compare-databases.js`    |
-| `npm run process:files`   | Procesamiento de archivos binarios      | `src/processors/extract-archivo-adjunto.js` |
-| `npm run generate:report` | Generar reporte de migración            | `src/scripts/generate-migration-report.js`  |
-| `npm run test-connections`| Probar conexiones a bases de datos      | `src/scripts/test-conexion.js`              |
+| Comando                    | Descripción                                     | Archivo                                     |
+| -------------------------- | ----------------------------------------------- | ------------------------------------------- |
+| `npm run migrate`          | 🎯 **Migración completa** (recomendado)         | `src/index.js` (ETLPipeline optimizado)     |
+| `npm run reset`            | 🧹 **Reset completo** - limpia directorios y DB | `src/scripts/reset.js`                      |
+| `npm run compare-db`       | 📊 Comparar conteos SQL Server vs PostgreSQL    | `src/scripts/compare-databases.js`          |
+| `npm run process:files`    | Procesamiento de archivos binarios              | `src/processors/extract-archivo-adjunto.js` |
+| `npm run generate:report`  | Generar reporte de migración                    | `src/scripts/generate-migration-report.js`  |
+| `npm run test-connections` | Probar conexiones a bases de datos              | `src/scripts/test-conexion.js`              |
 
 ---
 
@@ -293,15 +293,17 @@ npm run reset
 ```
 
 **¿Qué hace el reset?**
+
 - 🗂️ Limpia directorios: `logs/`, `Archivos/`, `Tablas/`, `Reportes/`
 - 🗄️ Elimina esquema `dbo` completo de PostgreSQL
 - ✅ Preserva archivos `.gitkeep` para Git
 - 📊 Muestra estadísticas detalladas de limpieza
 
 **Flujo típico:**
+
 ```bash
 npm run reset      # Limpiar estado anterior
-npm run migrate    # Nueva migración limpia  
+npm run migrate    # Nueva migración limpia
 npm run compare-db # Verificar resultados
 ```
 

@@ -53,11 +53,11 @@ export class DirectoryManager {
       logger.info(
         `✅ Directorio limpiado: ${cleanedCount} elementos eliminados, ${preservedCount} preservados`
       );
-      return { 
-        cleaned: cleanedCount, 
+      return {
+        cleaned: cleanedCount,
         preserved: preservedCount,
         filesRemoved: cleanedCount,
-        totalSizeRemoved: 0 // Por ahora no calculamos el tamaño eliminado
+        totalSizeRemoved: 0, // Por ahora no calculamos el tamaño eliminado
       };
     } catch (error) {
       logger.error(`❌ Error limpiando directorio ${dirPath}:`, error);
@@ -110,7 +110,7 @@ export class DirectoryManager {
 
       return {
         ...stats,
-        totalSize: stats.size
+        totalSize: stats.size,
       };
     } catch (error) {
       return { total: 0, files: 0, directories: 0, size: 0, totalSize: 0 };

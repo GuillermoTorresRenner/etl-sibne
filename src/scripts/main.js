@@ -20,6 +20,7 @@ export class ETLPipeline {
       totalRows: 0,
       errors: [],
       success: [],
+      binaryFilesProcessed: false,
     };
   }
 
@@ -136,8 +137,14 @@ export class ETLPipeline {
       // 2. Crear esquema en PostgreSQL si no existe
       await this.pgLoader.createSchemaIfNotExists(schema);
 
-      // 3. Crear tabla en PostgreSQL
-      await this.pgLoader.createTable(tableName, columns, schema);
+      // 3. Crear tabla en PostgreSQL (saltar ArchivoAdjunto, ya se creó)
+      if (tableName !== "ArchivoAdjunto") {
+        await this.pgLoader.createTable(tableName, columns, schema);
+      } else {
+        logger.info(
+          `⏭️ Saltando creación de ${tableName} - ya existe con estructura correcta`
+        );
+      }
 
       let result;
 
@@ -203,7 +210,7 @@ export class ETLPipeline {
   }
 
   /**
-   * Migración vía CSV
+   * Migración vía CSV con estrategia optimizada
    */
   async _migrateViaCSV(tableName, schema, columns) {
     try {
@@ -213,8 +220,8 @@ export class ETLPipeline {
         schema
       );
 
-      // 2. Cargar desde CSV
-      const loadResult = await this.pgLoader.loadFromCSV(
+      // 2. Cargar desde CSV usando estrategia optimizada
+      const loadResult = await this.pgLoader.loadFromCSVOptimized(
         csvResult.outputPath,
         tableName,
         columns,
@@ -289,6 +296,9 @@ export class ETLPipeline {
         await this._processTablesSequential(tables, mode, progressBar);
       }
 
+      // Procesar archivos binarios
+      await this._processBinaryFiles();
+
       // Finalizar
       this.stats.endTime = new Date();
       await this._generateReport();
@@ -304,29 +314,45 @@ export class ETLPipeline {
   }
 
   /**
-   * Procesar tablas en paralelo
+   * Procesar tablas en paralelo con optimizaciones
    */
   async _processTablesParallel(tables, mode, progressBar) {
-    const promises = tables.map((table) =>
-      this.concurrencyLimit(async () => {
-        const result = await this.migrateTable(table, mode);
-        this._updateStats(table, result);
-        progressBar.increment(`${table.TABLE_SCHEMA}.${table.TABLE_NAME}`);
-        return result;
-      })
-    );
+    // Deshabilitar constraints para mejor rendimiento
+    await this._disableFKConstraints();
 
-    await Promise.allSettled(promises);
+    try {
+      const promises = tables.map((table) =>
+        this.concurrencyLimit(async () => {
+          const result = await this.migrateTable(table, mode);
+          this._updateStats(table, result);
+          progressBar.increment(`${table.TABLE_SCHEMA}.${table.TABLE_NAME}`);
+          return result;
+        })
+      );
+
+      await Promise.allSettled(promises);
+    } finally {
+      // Rehabilitar constraints
+      await this._enableFKConstraints();
+    }
   }
 
   /**
-   * Procesar tablas secuencialmente
+   * Procesar tablas secuencialmente con optimizaciones
    */
   async _processTablesSequential(tables, mode, progressBar) {
-    for (const table of tables) {
-      const result = await this.migrateTable(table, mode);
-      this._updateStats(table, result);
-      progressBar.increment(`${table.TABLE_SCHEMA}.${table.TABLE_NAME}`);
+    // Deshabilitar constraints para mejor rendimiento
+    await this._disableFKConstraints();
+
+    try {
+      for (const table of tables) {
+        const result = await this.migrateTable(table, mode);
+        this._updateStats(table, result);
+        progressBar.increment(`${table.TABLE_SCHEMA}.${table.TABLE_NAME}`);
+      }
+    } finally {
+      // Rehabilitar constraints
+      await this._enableFKConstraints();
     }
   }
 
@@ -369,6 +395,11 @@ export class ETLPipeline {
     logger.info(
       `📊 Total filas migradas: ${this.stats.totalRows.toLocaleString()}`
     );
+    logger.info(
+      `📁 Archivos binarios: ${
+        this.stats.binaryFilesProcessed ? "✅ Procesados" : "❌ No procesados"
+      }`
+    );
 
     if (this.stats.errors.length > 0) {
       logger.info("\n❌ ERRORES ENCONTRADOS:");
@@ -393,6 +424,96 @@ export class ETLPipeline {
       if (this.stats.success.length > 10) {
         logger.info(`   ... y ${this.stats.success.length - 10} tablas más`);
       }
+    }
+  }
+
+  /**
+   * Deshabilitar constraints de FK para mejor rendimiento
+   */
+  async _disableFKConstraints() {
+    try {
+      logger.info(
+        "🔒 Deshabilitando constraints de FK para mejor rendimiento..."
+      );
+
+      await this.pgLoader.executeQuery(`
+        DO $$ 
+        DECLARE 
+          rec RECORD;
+        BEGIN
+          FOR rec IN 
+            SELECT schemaname, tablename
+            FROM pg_tables 
+            WHERE schemaname = 'dbo'
+          LOOP
+            EXECUTE 'ALTER TABLE dbo."' || rec.tablename || '" DISABLE TRIGGER ALL';
+          END LOOP;
+        END $$;
+      `);
+
+      logger.info("✅ Constraints FK deshabilitados correctamente");
+    } catch (error) {
+      logger.warn(
+        "⚠️ Error deshabilitando constraints (continuando):",
+        error.message
+      );
+    }
+  }
+
+  /**
+   * Rehabilitar constraints de FK
+   */
+  async _enableFKConstraints() {
+    try {
+      logger.info("🔓 Habilitando constraints de FK...");
+
+      await this.pgLoader.executeQuery(`
+        DO $$ 
+        DECLARE 
+          rec RECORD;
+        BEGIN
+          FOR rec IN 
+            SELECT schemaname, tablename
+            FROM pg_tables 
+            WHERE schemaname = 'dbo'
+          LOOP
+            EXECUTE 'ALTER TABLE dbo."' || rec.tablename || '" ENABLE TRIGGER ALL';
+          END LOOP;
+        END $$;
+      `);
+
+      logger.info("✅ Constraints FK habilitados correctamente");
+    } catch (error) {
+      logger.warn("⚠️ Error habilitando constraints:", error.message);
+    }
+  }
+
+  /**
+   * Procesar archivos binarios
+   */
+  async _processBinaryFiles() {
+    try {
+      logger.info("📁 PROCESANDO ARCHIVOS BINARIOS...");
+      logger.info("=====================================");
+
+      // Importar dinámicamente el procesador de archivos
+      const { default: extractArchivoAdjunto } = await import(
+        "../processors/extract-archivo-adjunto.js"
+      );
+
+      // Ejecutar extracción de archivos binarios
+      await extractArchivoAdjunto();
+
+      logger.info("✅ Procesamiento de archivos binarios completado");
+
+      // Actualizar estadísticas
+      this.stats.binaryFilesProcessed = true;
+    } catch (error) {
+      logger.error("❌ Error procesando archivos binarios:", error);
+      this.stats.errors.push({
+        step: "binary_files",
+        error: error.message,
+      });
     }
   }
 

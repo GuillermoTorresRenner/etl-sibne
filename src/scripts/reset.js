@@ -22,8 +22,8 @@ class ResetScript {
    */
   async run() {
     try {
-    logger.info("🚀 Iniciando reset completo del proyecto ETL SIBNE");
-    logger.info("=".repeat(60));      // 1. Limpiar directorios
+      logger.info("🚀 Iniciando reset completo del proyecto ETL SIBNE");
+      logger.info("=".repeat(60)); // 1. Limpiar directorios
       await this.cleanDirectories();
 
       // 2. Eliminar esquema de base de datos
@@ -170,7 +170,9 @@ class ResetScript {
         logger.info(`   ❌ ${result.directory}: Error - ${result.error}`);
       } else {
         logger.info(
-          `   ✅ ${result.directory}: ${result.filesRemoved || 0} archivos eliminados`
+          `   ✅ ${result.directory}: ${
+            result.filesRemoved || 0
+          } archivos eliminados`
         );
         totalFilesRemoved += result.filesRemoved || 0;
       }
