@@ -5,10 +5,10 @@
  * Verifica que tanto SQL Server como PostgreSQL estén accesibles
  */
 
-import { SqlServerExtractor } from "./extractors/sqlserver-extractor.js";
-import { PostgreSQLLoader } from "./loaders/postgres-loader.js";
-import { logger } from "./utils/logger.js";
-import { config, validateConfig } from "./config/database.js";
+import { SqlServerExtractor } from "../extractors/sqlserver-extractor.js";
+import { PostgreSQLLoader } from "../loaders/postgres-loader.js";
+import { logger } from "../utils/logger.js";
+import { config, validateConfig } from "../config/database.js";
 
 async function probarConexiones() {
   logger.info("🔍 PROBANDO CONEXIONES DE BASE DE DATOS");

@@ -9,7 +9,8 @@
     "analyze:schema": "node src/analyzers/analyze-prisma-schema.js",
     "process:files": "node src/processors/extract-archivo-adjunto.js",
     "generate:report": "node src/scripts/generate-migration-report.js",
-    "test": "node src/test-conexion.js conexion"
+    "compare-db": "node src/scripts/compare-databases.js",
+    "test-connections": "node src/scripts/test-conexion.js conexion"
   },
   "dependencies": {
     "csv-parser": "^3.0.0",

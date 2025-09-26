@@ -159,8 +159,12 @@ async function extractTableToCSV(sqlPool, tableName) {
       ),
     ].join("\n");
 
-    // Guardar archivo
-    const csvPath = path.join(__dirname, "Tablas", `dbo_${tableName}.csv`);
+    // Guardar archivo en la carpeta raíz Tablas/
+    const csvPath = path.join(
+      __dirname,
+      "../../Tablas",
+      `dbo_${tableName}.csv`
+    );
     fs.writeFileSync(csvPath, csvContent, "utf8");
 
     console.log(
@@ -214,8 +218,8 @@ async function runFullMigration() {
     let emptyTablesCount = 0;
     let failedCount = 0;
 
-    // Asegurar que existe la carpeta Tablas
-    const tablasDir = path.join(__dirname, "Tablas");
+    // Asegurar que existe la carpeta Tablas en el directorio raíz
+    const tablasDir = path.join(__dirname, "../../Tablas");
     if (!fs.existsSync(tablasDir)) {
       fs.mkdirSync(tablasDir, { recursive: true });
     }
