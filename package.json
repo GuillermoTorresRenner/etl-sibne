@@ -6,7 +6,6 @@
   "type": "module",
   "scripts": {
     "migrate": "node src/index.js",
-    "migrate-full": "node src/scripts/migrate-full.js",
     "reset": "node src/scripts/reset.js",
     "extract-files": "node src/processors/extract-archivo-adjunto.js",
     "generate-report": "node src/scripts/generate-migration-report.js",
