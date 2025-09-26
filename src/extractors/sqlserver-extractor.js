@@ -185,7 +185,18 @@ export class SqlServerExtractor {
       const request = this.pool.request();
       request.stream = true;
 
-      const query = `SELECT ${columnNames} FROM [${schema}].[${tableName}]`;
+      // Usar CAST para convertir campos que puedan tener caracteres especiales
+      const castColumns = nonBinaryColumns
+        .map((col) => {
+          // Convertir campos de texto a NVARCHAR para mejor manejo de caracteres especiales
+          if (['varchar', 'char', 'nvarchar', 'nchar', 'text', 'ntext'].includes(col.DATA_TYPE.toLowerCase())) {
+            return `CAST([${col.COLUMN_NAME}] AS NVARCHAR(MAX)) AS [${col.COLUMN_NAME}]`;
+          }
+          return `[${col.COLUMN_NAME}]`;
+        })
+        .join(", ");
+
+      const query = `SELECT ${castColumns} FROM [${schema}].[${tableName}] ORDER BY Id`;
 
       // En el contexto de streaming, devolvemos el request directamente
       return {
@@ -210,8 +221,35 @@ export class SqlServerExtractor {
   async extractTableToCSV(tableName, schema = "dbo") {
     try {
       const outputPath = `${config.paths.csvOutput}/${schema}_${tableName}.csv`;
-      const writeStream = createWriteStream(outputPath);
-      const csvStream = format({ headers: true });
+      const writeStream = createWriteStream(outputPath, { encoding: 'utf8' });
+      const csvStream = format({ 
+        headers: true,
+        quote: '"',
+        escape: '"',
+        delimiter: ',',
+        alwaysWriteHeaders: true,
+        transform: (row) => {
+          // Limpiar y escapar caracteres especiales en cada campo
+          const cleanedRow = {};
+          Object.keys(row).forEach(key => {
+            if (row[key] !== null && row[key] !== undefined) {
+              let value = String(row[key]);
+              // Reemplazar caracteres problemáticos
+              value = value
+                .replace(/"/g, '""')  // Escapar comillas dobles
+                .replace(/\r\n/g, ' ')  // Reemplazar saltos de línea
+                .replace(/\n/g, ' ')    // Reemplazar saltos de línea
+                .replace(/\r/g, ' ')    // Reemplazar retornos de carro
+                .replace(/\t/g, ' ')    // Reemplazar tabs
+                .trim();  // Quitar espacios al inicio y final
+              cleanedRow[key] = value;
+            } else {
+              cleanedRow[key] = row[key];
+            }
+          });
+          return cleanedRow;
+        }
+      });
 
       csvStream.pipe(writeStream);
 
@@ -230,13 +268,18 @@ export class SqlServerExtractor {
         });
 
         stream.on("row", (row) => {
-          csvStream.write(row);
-          processedRows++;
+          try {
+            csvStream.write(row);
+            processedRows++;
 
-          if (processedRows % 1000 === 0) {
-            logger.info(
-              `📊 ${schema}.${tableName}: ${processedRows}/${totalRows} filas procesadas`
-            );
+            if (processedRows % 1000 === 0) {
+              logger.info(
+                `📊 ${schema}.${tableName}: ${processedRows}/${totalRows} filas procesadas`
+              );
+            }
+          } catch (rowError) {
+            logger.warn(`⚠️ Error procesando fila ${processedRows + 1} en ${schema}.${tableName}:`, rowError);
+            // Continuar con la siguiente fila en lugar de fallar completamente
           }
         });
 

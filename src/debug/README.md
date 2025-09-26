@@ -47,6 +47,7 @@ node src/debug/debug-ArchivoAdjunto.js
 ### 4. Integrar al flujo principal:
 
 Una vez validadas las correcciones, migrar los cambios a:
+
 - `src/scripts/migrate-full.js`
 - `src/loaders/postgres-loader.js`
 - Otros archivos relevantes
@@ -79,6 +80,41 @@ npm run migrate
 - **Mantener respaldos** de la base estable actual
 - **Documentar hallazgos** en cada archivo debug
 - **Probar incremental** antes de integrar
+
+## 📝 Convenciones de Código
+
+### SQL Server:
+
+```javascript
+// ✅ Correcto
+const result = await this.sqlExtractor.pool.request().query(`
+  SELECT COUNT(*) as total FROM dbo.TableName
+`);
+```
+
+### PostgreSQL:
+
+```javascript
+// ✅ Correcto - usar comillas dobles y nombres en minúsculas
+const result = await this.pgLoader.executeQuery(`
+  SELECT COUNT(*) as total FROM dbo."TableName"
+`);
+
+// ✅ Para columnas específicas
+const result = await this.pgLoader.executeQuery(`
+  SELECT "id", "nombre", "email" FROM dbo."Contacto"
+`);
+```
+
+### Variables:
+
+```javascript
+// ✅ Correcto
+const tableDebugger = new TableDebugger();
+
+// ❌ Incorrecto - "debugger" es palabra reservada
+const debugger = new TableDebugger();
+```
 
 ## 🛡️ Preservación del Estado Estable
 

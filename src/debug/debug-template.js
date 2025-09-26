@@ -2,7 +2,7 @@
 
 /**
  * SIBNE ETL - Template de Debug para Tabla Individual
- * 
+ *
  * Plantilla para debugging de una tabla específica
  * Permite probar correcciones sin afectar el flujo principal
  */
@@ -31,18 +31,33 @@ class TableDebugger {
   async debugTable() {
     try {
       logger.info(`🔍 Analizando tabla: ${this.tableName}`);
-      
+
       // 1. Obtener info de la tabla desde SQL Server
-      const columns = await this.sqlExtractor.getTableInfo(this.tableName, "dbo");
+      const columns = await this.sqlExtractor.getTableInfo(
+        this.tableName,
+        "dbo"
+      );
       logger.info(`📋 Columnas detectadas: ${columns.length}`);
-      
-      // 2. Extraer algunos registros de muestra
-      const sampleData = await this.sqlExtractor.query(`
+
+      // 2. Conteo de registros en ambas bases
+      const sqlCount = await this.sqlExtractor.pool.request().query(`
+        SELECT COUNT(*) as total FROM dbo.${this.tableName}
+      `);
+
+      const pgCount = await this.pgLoader.executeQuery(`
+        SELECT COUNT(*) as total FROM dbo."${this.tableName}"
+      `);
+
+      logger.info(`📊 SQL Server: ${sqlCount.recordset[0].total} registros`);
+      logger.info(`📊 PostgreSQL: ${pgCount.rows[0].total} registros`);
+
+      // 3. Extraer algunos registros de muestra
+      const sampleData = await this.sqlExtractor.pool.request().query(`
         SELECT TOP 5 * FROM dbo.${this.tableName}
       `);
       logger.info(`📊 Registros de muestra: ${sampleData.recordset.length}`);
-      
-      // 3. Verificar estructura en PostgreSQL
+
+      // 4. Verificar estructura en PostgreSQL (usar minúsculas para nombres de columna)
       const pgStructure = await this.pgLoader.executeQuery(`
         SELECT column_name, data_type, is_nullable 
         FROM information_schema.columns 
@@ -51,13 +66,15 @@ class TableDebugger {
         ORDER BY ordinal_position;
       `);
       logger.info(`🗃️ Columnas en PostgreSQL: ${pgStructure.rows.length}`);
-      
+
       return {
         sqlColumns: columns,
+        sqlCount: sqlCount.recordset[0].total,
+        pgCount: pgCount.rows[0].total,
+        difference: sqlCount.recordset[0].total - pgCount.rows[0].total,
         sampleData: sampleData.recordset,
-        pgStructure: pgStructure.rows
+        pgStructure: pgStructure.rows,
       };
-      
     } catch (error) {
       logger.error(`❌ Error en debug de ${this.tableName}:`, error);
       throw error;
@@ -76,23 +93,35 @@ class TableDebugger {
  */
 async function debugSpecificTable(tableName) {
   const tableDebugger = new TableDebugger(tableName);
-  
+
   try {
     await tableDebugger.initialize();
     const results = await tableDebugger.debugTable();
-    
+
     console.log("\n=== RESULTADOS DEL DEBUG ===");
     console.log(`📋 SQL Server columnas: ${results.sqlColumns.length}`);
+    console.log(`📊 SQL Server registros: ${results.sqlCount}`);
+    console.log(`📊 PostgreSQL registros: ${results.pgCount}`);
+    console.log(`📊 Diferencia registros: ${results.difference}`);
     console.log(`📊 Registros muestra: ${results.sampleData.length}`);
     console.log(`🗃️ PostgreSQL columnas: ${results.pgStructure.length}`);
-    
+
     // Mostrar diferencias si las hay
     if (results.sqlColumns.length !== results.pgStructure.length) {
       console.log("⚠️  DIFERENCIA EN NÚMERO DE COLUMNAS DETECTADA");
     }
-    
+
+    if (results.difference > 0) {
+      console.log(`⚠️  FALTAN ${results.difference} REGISTROS EN POSTGRESQL`);
+    } else if (results.difference < 0) {
+      console.log(
+        `⚠️  HAY ${Math.abs(results.difference)} REGISTROS EXTRA EN POSTGRESQL`
+      );
+    } else {
+      console.log("✅ NÚMERO DE REGISTROS COINCIDE");
+    }
+
     return results;
-    
   } catch (error) {
     logger.error("❌ Error en debug:", error);
     throw error;
@@ -119,5 +148,21 @@ Para usar esta plantilla:
 
 Ejemplo:
   node src/debug/debug-ArchivoAdjunto.js
+
+📝 NOTAS IMPORTANTES:
+
+✅ Usar para SQL Server:
+   await this.sqlExtractor.pool.request().query(\`SELECT...\`)
+
+✅ Usar para PostgreSQL (nombres en minúsculas con comillas):
+   await this.pgLoader.executeQuery(\`SELECT * FROM dbo."NombreTabla"\`)
+
+✅ Evitar palabra reservada:
+   const tableDebugger = new TableDebugger(); // NO: debugger
+
+✅ Siempre usar comillas dobles para nombres de tabla/columna en PG:
+   SELECT "id", "nombre" FROM dbo."Contacto"
+
+⚠️ Recordar que las columnas en PG están en minúsculas/camelCase
   `);
 }

@@ -129,21 +129,47 @@ function getCSVHeaders(csvFilePath) {
   }
 }
 
-// Función para crear mapeo de columnas case-insensitive
+// Función para convertir PascalCase a camelCase
+function pascalToCamelCase(str) {
+  return str.charAt(0).toLowerCase() + str.slice(1);
+}
+
+// Función para crear mapeo de columnas con soporte PascalCase->camelCase
 function createColumnMapping(csvHeaders, dbColumns) {
   const mapping = {};
   const dbColumnMap = {};
 
-  // Crear mapeo de columnas de DB (case-insensitive)
+  // Crear mapeo de columnas de DB con múltiples variantes
   dbColumns.forEach((col) => {
-    dbColumnMap[col.name.toLowerCase()] = col.name;
+    const colName = col.name;
+    // Mapear: lowercase, original name, y camelCase
+    dbColumnMap[colName.toLowerCase()] = colName;
+    dbColumnMap[colName] = colName;
+    // Si la columna ya está en camelCase, también mapear su versión PascalCase
+    const pascalVersion = colName.charAt(0).toUpperCase() + colName.slice(1);
+    dbColumnMap[pascalVersion.toLowerCase()] = colName;
   });
 
   // Mapear headers de CSV a columnas de DB
   csvHeaders.forEach((csvHeader) => {
     const lowerHeader = csvHeader.toLowerCase();
+    
+    // Intentar mapeos en orden de prioridad:
+    // 1. Mapeo exacto (case-insensitive)
     if (dbColumnMap[lowerHeader]) {
       mapping[csvHeader] = dbColumnMap[lowerHeader];
+    }
+    // 2. Si es PascalCase, intentar camelCase
+    else if (csvHeader.length > 0 && csvHeader[0] === csvHeader[0].toUpperCase()) {
+      const camelCaseVersion = pascalToCamelCase(csvHeader);
+      if (dbColumnMap[camelCaseVersion.toLowerCase()]) {
+        mapping[csvHeader] = dbColumnMap[camelCaseVersion.toLowerCase()];
+        console.log(`🔄 Mapeo PascalCase->camelCase: ${csvHeader} → ${dbColumnMap[camelCaseVersion.toLowerCase()]}`);
+      } else {
+        console.warn(
+          `⚠️  Columna CSV '${csvHeader}' no encontrada en PostgreSQL (intentado: ${camelCaseVersion})`
+        );
+      }
     } else {
       console.warn(
         `⚠️  Columna CSV '${csvHeader}' no encontrada en PostgreSQL`
@@ -287,12 +313,71 @@ function cleanValue(value, columnType, columnName, nullable, hasDefault) {
   return value;
 }
 
+// Función para parsear CSV correctamente manejando campos multilínea
+function parseCSVContent(csvContent) {
+  const rows = [];
+  let currentRow = [];
+  let currentField = '';
+  let inQuotes = false;
+  let i = 0;
+  
+  while (i < csvContent.length) {
+    const char = csvContent[i];
+    
+    if (char === '"') {
+      if (inQuotes && csvContent[i + 1] === '"') {
+        // Comilla escapada ""
+        currentField += '"';
+        i += 2;
+        continue;
+      } else {
+        // Comilla de apertura/cierre
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      // Fin de campo
+      currentRow.push(currentField.trim());
+      currentField = '';
+    } else if ((char === '\n' || char === '\r') && !inQuotes) {
+      // Fin de fila
+      if (currentField.trim() || currentRow.length > 0) {
+        currentRow.push(currentField.trim());
+        if (currentRow.some(field => field.length > 0)) {
+          rows.push(currentRow);
+        }
+        currentRow = [];
+        currentField = '';
+      }
+      // Saltar \r\n
+      if (char === '\r' && csvContent[i + 1] === '\n') {
+        i++;
+      }
+    } else {
+      // Carácter normal o salto de línea dentro de comillas
+      currentField += char;
+    }
+    
+    i++;
+  }
+  
+  // Procesar último campo si existe
+  if (currentField.trim() || currentRow.length > 0) {
+    currentRow.push(currentField.trim());
+    if (currentRow.some(field => field.length > 0)) {
+      rows.push(currentRow);
+    }
+  }
+  
+  return rows;
+}
+
 // Función para procesar CSV con mapeo y limpieza de datos
 function processCSVWithMapping(csvContent, tableName, dbColumns) {
-  const lines = csvContent.split("\n").filter((line) => line.trim());
-  if (lines.length === 0) return { headers: [], rows: [] };
+  // Parsear CSV correctamente con campos multilínea usando regex
+  const csvData = parseCSVContent(csvContent);
+  if (csvData.length === 0) return { headers: [], rows: [] };
 
-  const csvHeaders = lines[0].split(",").map((h) => h.trim());
+  const csvHeaders = csvData[0].map((h) => h.trim());
   const mapping = createColumnMapping(csvHeaders, dbColumns);
 
   // Crear columnas mapeadas con información de tipo
@@ -313,14 +398,14 @@ function processCSVWithMapping(csvContent, tableName, dbColumns) {
     })
     .filter((col) => col !== null);
 
-  // Procesar filas
+  // Procesar filas (saltar header)
   const rows = [];
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-
-    const values = line.split(",");
-    if (values.length !== csvHeaders.length) continue;
+  for (let i = 1; i < csvData.length; i++) {
+    const values = csvData[i];
+    if (values.length !== csvHeaders.length) {
+      console.warn(`⚠️ Fila ${i} tiene ${values.length} columnas, esperaba ${csvHeaders.length}. Saltando.`);
+      continue;
+    }
 
     const cleanedRow = [];
     mappedColumns.forEach((col, index) => {

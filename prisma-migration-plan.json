@@ -40,8 +40,8 @@
     "SubSectorEconomico",
     "EnergeticoUnidadMedida",
     "Comuna",
-    "Empresa",
     "CargaMasivaError",
+    "Empresa",
     "Contacto",
     "EmailLogs",
     "EncuestaEmpresa",
@@ -88,8 +88,8 @@
     "SubSectorEconomico",
     "EnergeticoUnidadMedida",
     "Comuna",
-    "Empresa",
     "CargaMasivaError",
+    "Empresa",
     "Contacto",
     "EmailLogs",
     "EncuestaEmpresa",
@@ -119,9 +119,7 @@
           "inferred": true
         }
       ],
-      "dependsOn": [
-        "CargaMasivaArchivo"
-      ]
+      "dependsOn": ["CargaMasivaArchivo"]
     },
     "CargaMasivaError": {
       "relations": [
@@ -144,11 +142,7 @@
           "inferred": true
         }
       ],
-      "dependsOn": [
-        "CargaMasivaArchivo",
-        "CargaMasivaDetalle",
-        "Empresa"
-      ]
+      "dependsOn": ["CargaMasivaArchivo", "CargaMasivaDetalle", "Empresa"]
     },
     "CategoriaTransaccion": {
       "relations": [
@@ -159,9 +153,7 @@
           "inferred": true
         }
       ],
-      "dependsOn": [
-        "Formulario"
-      ]
+      "dependsOn": ["Formulario"]
     },
     "Comuna": {
       "relations": [
@@ -178,10 +170,7 @@
           "inferred": true
         }
       ],
-      "dependsOn": [
-        "Provincia",
-        "Region"
-      ]
+      "dependsOn": ["Provincia", "Region"]
     },
     "Contacto": {
       "relations": [
@@ -198,10 +187,7 @@
           "inferred": true
         }
       ],
-      "dependsOn": [
-        "Empresa",
-        "TipoContacto"
-      ]
+      "dependsOn": ["Empresa", "TipoContacto"]
     },
     "EmailConfig": {
       "relations": [
@@ -218,10 +204,7 @@
           "inferred": true
         }
       ],
-      "dependsOn": [
-        "EstadoEmail",
-        "Encuesta"
-      ]
+      "dependsOn": ["EstadoEmail", "Encuesta"]
     },
     "EmailLogs": {
       "relations": [
@@ -238,10 +221,7 @@
           "inferred": true
         }
       ],
-      "dependsOn": [
-        "EmailConfig",
-        "Empresa"
-      ]
+      "dependsOn": ["EmailConfig", "Empresa"]
     },
     "Empresa": {
       "relations": [
@@ -302,11 +282,7 @@
           "inferred": true
         }
       ],
-      "dependsOn": [
-        "Empresa",
-        "Encuesta",
-        "EstadoEmpresa"
-      ]
+      "dependsOn": ["Empresa", "Encuesta", "EstadoEmpresa"]
     },
     "EncuestaPlanta": {
       "relations": [
@@ -329,11 +305,7 @@
           "inferred": true
         }
       ],
-      "dependsOn": [
-        "Encuesta",
-        "Planta",
-        "EstadoProceso"
-      ]
+      "dependsOn": ["Encuesta", "Planta", "EstadoProceso"]
     },
     "Energetico": {
       "relations": [
@@ -377,10 +349,7 @@
           "inferred": true
         }
       ],
-      "dependsOn": [
-        "Energetico",
-        "UnidadMedida"
-      ]
+      "dependsOn": ["Energetico", "UnidadMedida"]
     },
     "EstadoEmail": {
       "relations": [],
@@ -434,10 +403,7 @@
           "inferred": true
         }
       ],
-      "dependsOn": [
-        "Empresa",
-        "Encuesta"
-      ]
+      "dependsOn": ["Empresa", "Encuesta"]
     },
     "Pais": {
       "relations": [],
@@ -458,10 +424,7 @@
           "inferred": true
         }
       ],
-      "dependsOn": [
-        "Comuna",
-        "Empresa"
-      ]
+      "dependsOn": ["Comuna", "Empresa"]
     },
     "Provincia": {
       "relations": [
@@ -472,9 +435,7 @@
           "inferred": true
         }
       ],
-      "dependsOn": [
-        "Region"
-      ]
+      "dependsOn": ["Region"]
     },
     "Region": {
       "relations": [],
@@ -495,10 +456,7 @@
           "inferred": true
         }
       ],
-      "dependsOn": [
-        "EstadoReporte",
-        "Encuesta"
-      ]
+      "dependsOn": ["EstadoReporte", "Encuesta"]
     },
     "Role": {
       "relations": [],
@@ -525,9 +483,7 @@
           "inferred": true
         }
       ],
-      "dependsOn": [
-        "SectorEconomico"
-      ]
+      "dependsOn": ["SectorEconomico"]
     },
     "Tecnologia": {
       "relations": [],
@@ -670,10 +626,7 @@
           "inferred": true
         }
       ],
-      "dependsOn": [
-        "Formulario",
-        "IntensidadEnergEncuestaEmpresa"
-      ]
+      "dependsOn": ["Formulario", "IntensidadEnergEncuestaEmpresa"]
     },
     "UnidadMedida": {
       "relations": [
@@ -722,9 +675,7 @@
           "inferred": true
         }
       ],
-      "dependsOn": [
-        "Role"
-      ]
+      "dependsOn": ["Role"]
     },
     "UsuarioToken": {
       "relations": [
