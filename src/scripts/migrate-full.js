@@ -102,11 +102,7 @@ const TABLE_NAME_MAPPING = {
 // �🚧 TABLAS QUE NO EXISTEN EN LA BD ORIGINAL
 // Estas tablas NO están en la base de datos de SQL Server
 const DEV_TABLES_TO_EXCLUDE = [
-  // "Users" eliminada de la base de datos para evitar conflictos
-  "Encuesta",
-  "EncuestaEmpresa",
-  "EncuestaPlanta",
-  "IntensidadEnergEncuestaEmpresa",
+  // Todas las tablas en ALL_TABLES existen en SQL Server y serán procesadas
 ];
 
 // Filtrar tablas que realmente existen en la BD original
@@ -144,19 +140,34 @@ async function extractTableToCSV(sqlPool, tableName) {
             if (value === null || value === undefined) {
               return "";
             }
-            if (
-              typeof value === "string" &&
-              (value.includes(",") || value.includes('"'))
-            ) {
-              return `"${value.replace(/"/g, '""')}"`;
-            }
+
+            // Convertir a string si no lo es
             if (value instanceof Date) {
-              return value.toISOString();
-            }
-            if (Buffer.isBuffer(value)) {
+              value = value.toISOString();
+            } else if (Buffer.isBuffer(value)) {
               return ""; // Omitir binarios en CSV normal
+            } else {
+              value = value.toString();
             }
-            return value.toString();
+
+            // Manejar campos de texto con caracteres especiales
+            if (typeof value === "string") {
+              // Escapar comillas dobles
+              let escapedValue = value.replace(/"/g, '""');
+
+              // Si contiene comas, comillas, o saltos de línea, envolver en comillas
+              if (
+                value.includes(",") ||
+                value.includes('"') ||
+                value.includes("\n") ||
+                value.includes("\r")
+              ) {
+                return `"${escapedValue}"`;
+              }
+              return escapedValue;
+            }
+
+            return value;
           })
           .join(",")
       ),
