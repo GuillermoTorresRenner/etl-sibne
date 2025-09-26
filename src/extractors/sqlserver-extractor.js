@@ -228,20 +228,34 @@ export class SqlServerExtractor {
         escape: '"',
         delimiter: ',',
         alwaysWriteHeaders: true,
+        quoteColumns: true, // Forzar comillas en todas las columnas
         transform: (row) => {
           // Limpiar y escapar caracteres especiales en cada campo
           const cleanedRow = {};
           Object.keys(row).forEach(key => {
             if (row[key] !== null && row[key] !== undefined) {
               let value = String(row[key]);
-              // Reemplazar caracteres problemáticos
-              value = value
-                .replace(/"/g, '""')  // Escapar comillas dobles
-                .replace(/\r\n/g, ' ')  // Reemplazar saltos de línea
-                .replace(/\n/g, ' ')    // Reemplazar saltos de línea
-                .replace(/\r/g, ' ')    // Reemplazar retornos de carro
-                .replace(/\t/g, ' ')    // Reemplazar tabs
-                .trim();  // Quitar espacios al inicio y final
+              
+              // Para EmailLogs, aplicar limpieza intensiva de saltos de línea
+              if (tableName === 'EmailLogs') {
+                value = value
+                  .replace(/\r\n/g, '\\n')  // Escapar saltos de línea Windows
+                  .replace(/\n/g, '\\n')    // Escapar saltos de línea Unix
+                  .replace(/\r/g, '\\n')    // Escapar retornos de carro Mac
+                  .replace(/"/g, '""')      // Escapar comillas dobles
+                  .replace(/\t/g, ' ')      // Reemplazar tabs con espacios
+                  .trim();
+              } else {
+                // Para otras tablas, reemplazar con espacios como antes
+                value = value
+                  .replace(/"/g, '""')      // Escapar comillas dobles
+                  .replace(/\r\n/g, ' ')    // Reemplazar saltos de línea
+                  .replace(/\n/g, ' ')      // Reemplazar saltos de línea
+                  .replace(/\r/g, ' ')      // Reemplazar retornos de carro
+                  .replace(/\t/g, ' ')      // Reemplazar tabs
+                  .trim();
+              }
+              
               cleanedRow[key] = value;
             } else {
               cleanedRow[key] = row[key];
