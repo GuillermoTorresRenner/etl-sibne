@@ -153,18 +153,25 @@ function createColumnMapping(csvHeaders, dbColumns) {
   // Mapear headers de CSV a columnas de DB
   csvHeaders.forEach((csvHeader) => {
     const lowerHeader = csvHeader.toLowerCase();
-    
+
     // Intentar mapeos en orden de prioridad:
     // 1. Mapeo exacto (case-insensitive)
     if (dbColumnMap[lowerHeader]) {
       mapping[csvHeader] = dbColumnMap[lowerHeader];
     }
     // 2. Si es PascalCase, intentar camelCase
-    else if (csvHeader.length > 0 && csvHeader[0] === csvHeader[0].toUpperCase()) {
+    else if (
+      csvHeader.length > 0 &&
+      csvHeader[0] === csvHeader[0].toUpperCase()
+    ) {
       const camelCaseVersion = pascalToCamelCase(csvHeader);
       if (dbColumnMap[camelCaseVersion.toLowerCase()]) {
         mapping[csvHeader] = dbColumnMap[camelCaseVersion.toLowerCase()];
-        console.log(`🔄 Mapeo PascalCase->camelCase: ${csvHeader} → ${dbColumnMap[camelCaseVersion.toLowerCase()]}`);
+        console.log(
+          `🔄 Mapeo PascalCase->camelCase: ${csvHeader} → ${
+            dbColumnMap[camelCaseVersion.toLowerCase()]
+          }`
+        );
       } else {
         console.warn(
           `⚠️  Columna CSV '${csvHeader}' no encontrada en PostgreSQL (intentado: ${camelCaseVersion})`
@@ -317,13 +324,13 @@ function cleanValue(value, columnType, columnName, nullable, hasDefault) {
 function parseCSVContent(csvContent) {
   const rows = [];
   let currentRow = [];
-  let currentField = '';
+  let currentField = "";
   let inQuotes = false;
   let i = 0;
-  
+
   while (i < csvContent.length) {
     const char = csvContent[i];
-    
+
     if (char === '"') {
       if (inQuotes && csvContent[i + 1] === '"') {
         // Comilla escapada ""
@@ -334,40 +341,40 @@ function parseCSVContent(csvContent) {
         // Comilla de apertura/cierre
         inQuotes = !inQuotes;
       }
-    } else if (char === ',' && !inQuotes) {
+    } else if (char === "," && !inQuotes) {
       // Fin de campo
       currentRow.push(currentField.trim());
-      currentField = '';
-    } else if ((char === '\n' || char === '\r') && !inQuotes) {
+      currentField = "";
+    } else if ((char === "\n" || char === "\r") && !inQuotes) {
       // Fin de fila
       if (currentField.trim() || currentRow.length > 0) {
         currentRow.push(currentField.trim());
-        if (currentRow.some(field => field.length > 0)) {
+        if (currentRow.some((field) => field.length > 0)) {
           rows.push(currentRow);
         }
         currentRow = [];
-        currentField = '';
+        currentField = "";
       }
       // Saltar \r\n
-      if (char === '\r' && csvContent[i + 1] === '\n') {
+      if (char === "\r" && csvContent[i + 1] === "\n") {
         i++;
       }
     } else {
       // Carácter normal o salto de línea dentro de comillas
       currentField += char;
     }
-    
+
     i++;
   }
-  
+
   // Procesar último campo si existe
   if (currentField.trim() || currentRow.length > 0) {
     currentRow.push(currentField.trim());
-    if (currentRow.some(field => field.length > 0)) {
+    if (currentRow.some((field) => field.length > 0)) {
       rows.push(currentRow);
     }
   }
-  
+
   return rows;
 }
 
@@ -403,7 +410,9 @@ function processCSVWithMapping(csvContent, tableName, dbColumns) {
   for (let i = 1; i < csvData.length; i++) {
     const values = csvData[i];
     if (values.length !== csvHeaders.length) {
-      console.warn(`⚠️ Fila ${i} tiene ${values.length} columnas, esperaba ${csvHeaders.length}. Saltando.`);
+      console.warn(
+        `⚠️ Fila ${i} tiene ${values.length} columnas, esperaba ${csvHeaders.length}. Saltando.`
+      );
       continue;
     }
 
@@ -520,8 +529,13 @@ async function processTable(client, tableName) {
     await client.query(`TRUNCATE TABLE dbo."${tableName}" CASCADE`);
     console.log(`🗑️  Tabla ${tableName} truncada`);
 
-    // Insertar datos
-    await insertDataBatch(client, tableName, headers, rows);
+    // Determinar batchSize desde variable de entorno o default
+    let batchSize = 1000;
+    if (process.env.BATCH_SIZE) {
+      const parsed = parseInt(process.env.BATCH_SIZE);
+      if (!isNaN(parsed) && parsed > 0) batchSize = parsed;
+    }
+    await insertDataBatch(client, tableName, headers, rows, batchSize);
   } catch (error) {
     console.error(`❌ Error procesando tabla ${tableName}:`, error.message);
     throw error;
