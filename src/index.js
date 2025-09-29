@@ -17,15 +17,23 @@ async function main() {
     await runFullMigration();
 
     // Ejecutar migración robusta desde los CSV
-    logger.info("🚀 Ejecutando migración robusta desde los CSV (final-prisma-migration.js)");
-    const { spawn } = await import('child_process');
+    logger.info(
+      "🚀 Ejecutando migración robusta desde los CSV (final-prisma-migration.js)"
+    );
+    const { spawn } = await import("child_process");
     await new Promise((resolve, reject) => {
-      const child = spawn('node', ['src/migrations/final-prisma-migration.js'], { stdio: 'inherit' });
-      child.on('close', (code) => {
+      const child = spawn(
+        "node",
+        ["src/migrations/final-prisma-migration.js"],
+        { stdio: "inherit" }
+      );
+      child.on("close", (code) => {
         if (code === 0) {
           resolve();
         } else {
-          reject(new Error(`final-prisma-migration.js exited with code ${code}`));
+          reject(
+            new Error(`final-prisma-migration.js exited with code ${code}`)
+          );
         }
       });
     });
