@@ -185,7 +185,22 @@ export class SqlServerExtractor {
       const request = this.pool.request();
       request.stream = true;
 
-      const query = `SELECT ${columnNames} FROM [${schema}].[${tableName}]`;
+      // Usar CAST para convertir campos que puedan tener caracteres especiales
+      const castColumns = nonBinaryColumns
+        .map((col) => {
+          // Convertir campos de texto a NVARCHAR para mejor manejo de caracteres especiales
+          if (
+            ["varchar", "char", "nvarchar", "nchar", "text", "ntext"].includes(
+              col.DATA_TYPE.toLowerCase()
+            )
+          ) {
+            return `CAST([${col.COLUMN_NAME}] AS NVARCHAR(MAX)) AS [${col.COLUMN_NAME}]`;
+          }
+          return `[${col.COLUMN_NAME}]`;
+        })
+        .join(", ");
+
+      const query = `SELECT ${castColumns} FROM [${schema}].[${tableName}] ORDER BY Id`;
 
       // En el contexto de streaming, devolvemos el request directamente
       return {
@@ -210,8 +225,49 @@ export class SqlServerExtractor {
   async extractTableToCSV(tableName, schema = "dbo") {
     try {
       const outputPath = `${config.paths.csvOutput}/${schema}_${tableName}.csv`;
-      const writeStream = createWriteStream(outputPath);
-      const csvStream = format({ headers: true });
+      const writeStream = createWriteStream(outputPath, { encoding: "utf8" });
+      const csvStream = format({
+        headers: true,
+        quote: '"',
+        escape: '"',
+        delimiter: ",",
+        alwaysWriteHeaders: true,
+        quoteColumns: true, // Forzar comillas en todas las columnas
+        transform: (row) => {
+          // Limpiar y escapar caracteres especiales en cada campo
+          const cleanedRow = {};
+          Object.keys(row).forEach((key) => {
+            if (row[key] !== null && row[key] !== undefined) {
+              let value = String(row[key]);
+
+              // Para EmailLogs, aplicar limpieza intensiva de saltos de línea
+              if (tableName === "EmailLogs") {
+                value = value
+                  .replace(/\r\n/g, "\\n") // Escapar saltos de línea Windows
+                  .replace(/\n/g, "\\n") // Escapar saltos de línea Unix
+                  .replace(/\r/g, "\\n") // Escapar retornos de carro Mac
+                  .replace(/"/g, '""') // Escapar comillas dobles
+                  .replace(/\t/g, " ") // Reemplazar tabs con espacios
+                  .trim();
+              } else {
+                // Para otras tablas, reemplazar con espacios como antes
+                value = value
+                  .replace(/"/g, '""') // Escapar comillas dobles
+                  .replace(/\r\n/g, " ") // Reemplazar saltos de línea
+                  .replace(/\n/g, " ") // Reemplazar saltos de línea
+                  .replace(/\r/g, " ") // Reemplazar retornos de carro
+                  .replace(/\t/g, " ") // Reemplazar tabs
+                  .trim();
+              }
+
+              cleanedRow[key] = value;
+            } else {
+              cleanedRow[key] = row[key];
+            }
+          });
+          return cleanedRow;
+        },
+      });
 
       csvStream.pipe(writeStream);
 
@@ -230,13 +286,23 @@ export class SqlServerExtractor {
         });
 
         stream.on("row", (row) => {
-          csvStream.write(row);
-          processedRows++;
+          try {
+            csvStream.write(row);
+            processedRows++;
 
-          if (processedRows % 1000 === 0) {
-            logger.info(
-              `📊 ${schema}.${tableName}: ${processedRows}/${totalRows} filas procesadas`
+            if (processedRows % 1000 === 0) {
+              logger.info(
+                `📊 ${schema}.${tableName}: ${processedRows}/${totalRows} filas procesadas`
+              );
+            }
+          } catch (rowError) {
+            logger.warn(
+              `⚠️ Error procesando fila ${
+                processedRows + 1
+              } en ${schema}.${tableName}:`,
+              rowError
             );
+            // Continuar con la siguiente fila en lugar de fallar completamente
           }
         });
 
@@ -284,7 +350,8 @@ export class SqlServerExtractor {
   async getRowCount(tableName) {
     try {
       await this.connect();
-      const result = await this.pool.request()
+      const result = await this.pool
+        .request()
         .query(`SELECT COUNT(*) as count FROM dbo.[${tableName}]`);
       return result.recordset[0].count;
     } catch (error) {
@@ -299,9 +366,9 @@ export class SqlServerExtractor {
   async getTableSchema(tableName) {
     try {
       await this.connect();
-      const result = await this.pool.request()
-        .input('tableName', sql.VarChar, tableName)
-        .query(`
+      const result = await this.pool
+        .request()
+        .input("tableName", sql.VarChar, tableName).query(`
           SELECT 
             c.COLUMN_NAME as name,
             c.DATA_TYPE as type,
@@ -332,7 +399,8 @@ export class SqlServerExtractor {
   async getSampleData(tableName, limit = 10) {
     try {
       await this.connect();
-      const result = await this.pool.request()
+      const result = await this.pool
+        .request()
         .query(`SELECT TOP ${limit} * FROM dbo.[${tableName}]`);
       return result.recordset;
     } catch (error) {
@@ -349,19 +417,22 @@ export class SqlServerExtractor {
       await this.connect();
       const schema = await this.getTableSchema(tableName);
       const nullChecks = [];
-      
+
       for (const column of schema) {
-        const result = await this.pool.request()
-          .query(`SELECT COUNT(*) as nullCount FROM dbo.[${tableName}] WHERE [${column.name}] IS NULL`);
-        
+        const result = await this.pool
+          .request()
+          .query(
+            `SELECT COUNT(*) as nullCount FROM dbo.[${tableName}] WHERE [${column.name}] IS NULL`
+          );
+
         if (result.recordset[0].nullCount > 0) {
           nullChecks.push({
             column: column.name,
-            nullCount: result.recordset[0].nullCount
+            nullCount: result.recordset[0].nullCount,
           });
         }
       }
-      
+
       return nullChecks;
     } catch (error) {
       logger.error(`❌ Error verificando valores NULL en ${tableName}:`, error);
@@ -375,8 +446,7 @@ export class SqlServerExtractor {
   async checkDuplicates(tableName, columnName) {
     try {
       await this.connect();
-      const result = await this.pool.request()
-        .query(`
+      const result = await this.pool.request().query(`
           SELECT COUNT(*) as duplicates
           FROM (
             SELECT [${columnName}], COUNT(*) as cnt
@@ -387,7 +457,10 @@ export class SqlServerExtractor {
         `);
       return result.recordset[0].duplicates;
     } catch (error) {
-      logger.error(`❌ Error verificando duplicados en ${tableName}.${columnName}:`, error);
+      logger.error(
+        `❌ Error verificando duplicados en ${tableName}.${columnName}:`,
+        error
+      );
       throw error;
     }
   }

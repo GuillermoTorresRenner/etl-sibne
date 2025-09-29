@@ -15,10 +15,7 @@ import path from "path";
 import fs from "fs";
 import sql from "mssql";
 import dotenv from "dotenv";
-import pLimit from "p-limit";
 import { logger } from "../utils/logger.js";
-import { config } from "../config/database.js";
-import { ProgressBar } from "../utils/progress.js";
 import MigrationReportGenerator from "./generate-migration-report.js";
 
 dotenv.config();
@@ -102,7 +99,11 @@ const TABLE_NAME_MAPPING = {
 // �🚧 TABLAS QUE NO EXISTEN EN LA BD ORIGINAL
 // Estas tablas NO están en la base de datos de SQL Server
 const DEV_TABLES_TO_EXCLUDE = [
-  // Todas las tablas en ALL_TABLES existen en SQL Server y serán procesadas
+  // "Users" eliminada de la base de datos para evitar conflictos
+  "Encuesta",
+  "EncuestaEmpresa",
+  "EncuestaPlanta",
+  "IntensidadEnergEncuestaEmpresa",
 ];
 
 // Filtrar tablas que realmente existen en la BD original
@@ -140,34 +141,19 @@ async function extractTableToCSV(sqlPool, tableName) {
             if (value === null || value === undefined) {
               return "";
             }
-
-            // Convertir a string si no lo es
+            if (
+              typeof value === "string" &&
+              (value.includes(",") || value.includes('"'))
+            ) {
+              return `"${value.replace(/"/g, '""')}"`;
+            }
             if (value instanceof Date) {
-              value = value.toISOString();
-            } else if (Buffer.isBuffer(value)) {
+              return value.toISOString();
+            }
+            if (Buffer.isBuffer(value)) {
               return ""; // Omitir binarios en CSV normal
-            } else {
-              value = value.toString();
             }
-
-            // Manejar campos de texto con caracteres especiales
-            if (typeof value === "string") {
-              // Escapar comillas dobles
-              let escapedValue = value.replace(/"/g, '""');
-
-              // Si contiene comas, comillas, o saltos de línea, envolver en comillas
-              if (
-                value.includes(",") ||
-                value.includes('"') ||
-                value.includes("\n") ||
-                value.includes("\r")
-              ) {
-                return `"${escapedValue}"`;
-              }
-              return escapedValue;
-            }
-
-            return value;
+            return value.toString();
           })
           .join(",")
       ),
@@ -193,176 +179,6 @@ async function extractTableToCSV(sqlPool, tableName) {
     logger.error(`Error extrayendo tabla ${tableName}`, error);
     return "error";
   }
-}
-
-// ====== OPTIMIZACIONES DE RENDIMIENTO ======
-
-// Configuración de concurrencia dinámica
-const concurrencyLimit = pLimit(config.etl.concurrency);
-
-/**
- * Función optimizada para deshabilitar FK constraints
- */
-async function disableFKConstraintsOptimized() {
-  const { Pool } = await import("pg");
-  const pool = new Pool({
-    user: process.env.PG_USER,
-    host: process.env.PG_HOST,
-    database: process.env.PG_DATABASE,
-    password: process.env.PG_PASSWORD,
-    port: process.env.PG_PORT,
-  });
-
-  try {
-    logger.info(
-      "🔒 Deshabilitando constraints de FK para mejor rendimiento..."
-    );
-
-    await pool.query(`
-      DO $$ 
-      DECLARE 
-        rec RECORD;
-      BEGIN
-        FOR rec IN 
-          SELECT schemaname, tablename
-          FROM pg_tables 
-          WHERE schemaname = 'dbo'
-        LOOP
-          EXECUTE 'ALTER TABLE dbo."' || rec.tablename || '" DISABLE TRIGGER ALL';
-        END LOOP;
-      END $$;
-    `);
-
-    logger.info("✅ Constraints FK deshabilitados correctamente");
-  } catch (error) {
-    logger.warn(
-      "⚠️ Error deshabilitando constraints (continuando):",
-      error.message
-    );
-  } finally {
-    await pool.end();
-  }
-}
-
-/**
- * Función optimizada para habilitar FK constraints
- */
-async function enableFKConstraintsOptimized() {
-  const { Pool } = await import("pg");
-  const pool = new Pool({
-    user: process.env.PG_USER,
-    host: process.env.PG_HOST,
-    database: process.env.PG_DATABASE,
-    password: process.env.PG_PASSWORD,
-    port: process.env.PG_PORT,
-  });
-
-  try {
-    logger.info("🔓 Habilitando constraints de FK...");
-
-    await pool.query(`
-      DO $$ 
-      DECLARE 
-        rec RECORD;
-      BEGIN
-        FOR rec IN 
-          SELECT schemaname, tablename
-          FROM pg_tables 
-          WHERE schemaname = 'dbo'
-        LOOP
-          EXECUTE 'ALTER TABLE dbo."' || rec.tablename || '" ENABLE TRIGGER ALL';
-        END LOOP;
-      END $$;
-    `);
-
-    logger.info("✅ Constraints FK habilitados correctamente");
-  } catch (error) {
-    logger.warn("⚠️ Error habilitando constraints:", error.message);
-  } finally {
-    await pool.end();
-  }
-}
-
-/**
- * Ejecutar migración a PostgreSQL con optimizaciones
- */
-async function runOptimizedPrismaMigration() {
-  const startTime = Date.now();
-  logger.info(
-    "🚀 Iniciando migración optimizada con constraints deshabilitados"
-  );
-
-  // Deshabilitar constraints para mejor rendimiento
-  await disableFKConstraintsOptimized();
-
-  try {
-    console.log("🔄 Ejecutando migración de datos a PostgreSQL...");
-
-    // Ejecutar migración original
-    const { default: runPrismaMigration } = await import(
-      "../migrations/final-prisma-migration.js"
-    );
-    await runPrismaMigration();
-
-    const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-    console.log(`\n✅ Migración optimizada completada en ${duration}s`);
-    logger.info(`✅ Migración optimizada completada en ${duration}s`);
-  } finally {
-    // Siempre rehabilitar constraints
-    await enableFKConstraintsOptimized();
-  }
-}
-
-/**
- * Procesar extracción de tablas con concurrencia limitada
- */
-async function extractTablesWithConcurrency(sqlPool, tables) {
-  const startTime = Date.now();
-  logger.info(
-    `🔄 Extrayendo ${tables.length} tablas con concurrencia limitada (max: ${config.etl.concurrency})`
-  );
-
-  // Crear barra de progreso
-  const progressBar = new ProgressBar(tables.length, "Extrayendo datos");
-
-  const extractionPromises = tables.map((tableName) =>
-    concurrencyLimit(async () => {
-      const result = await extractTableToCSV(sqlPool, tableName);
-
-      // Actualizar progreso
-      progressBar.increment(`${tableName} (${result})`);
-
-      return { table: tableName, result };
-    })
-  );
-
-  const results = await Promise.allSettled(extractionPromises);
-
-  // Contar resultados
-  const successful = results.filter(
-    (r) => r.status === "fulfilled" && r.value.result === "success"
-  ).length;
-  const empty = results.filter(
-    (r) => r.status === "fulfilled" && r.value.result === "empty"
-  ).length;
-  const failed = results.filter(
-    (r) =>
-      r.status === "rejected" ||
-      (r.status === "fulfilled" && r.value.result === "error")
-  ).length;
-
-  const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-
-  console.log(`\n📊 Extracción concurrente completada en ${duration}s:`);
-  console.log(`   ✅ Exitosas: ${successful}`);
-  console.log(`   ⏭️  Vacías: ${empty}`);
-  console.log(`   ❌ Fallidas: ${failed}`);
-
-  logger.info(
-    `📊 Extracción concurrente completada en ${duration}s: ${successful} exitosas, ${empty} vacías, ${failed} fallidas`
-  );
-
-  return results;
 }
 
 // Función principal
@@ -408,23 +224,14 @@ async function runFullMigration() {
       fs.mkdirSync(tablasDir, { recursive: true });
     }
 
-    // Extraer tablas con concurrencia optimizada
-    const extractionResults = await extractTablesWithConcurrency(
-      sqlPool,
-      TABLES_TO_EXTRACT
-    );
-
-    // Contar resultados
-    for (const result of extractionResults) {
-      if (result.status === "fulfilled") {
-        if (result.value.result === "success") {
-          extractedCount++;
-        } else if (result.value.result === "empty") {
-          emptyTablesCount++;
-        } else if (result.value.result === "error") {
-          failedCount++;
-        }
-      } else {
+    // Extraer cada tabla
+    for (const tableName of TABLES_TO_EXTRACT) {
+      const result = await extractTableToCSV(sqlPool, tableName);
+      if (result === "success") {
+        extractedCount++;
+      } else if (result === "empty") {
+        emptyTablesCount++;
+      } else if (result === "error") {
         failedCount++;
       }
     }
@@ -452,14 +259,15 @@ async function runFullMigration() {
     // El analizador se ejecuta automáticamente al importarse
     logger.info("Análisis de esquemas Prisma completado");
 
-    // PASO 3: Ejecutar migración optimizada a PostgreSQL
-    console.log(
-      "\n🔄 PASO 3: Ejecutando migración OPTIMIZADA a PostgreSQL...\n"
-    );
-    logger.info("PASO 3: Iniciando migración optimizada a PostgreSQL");
+    // PASO 3: Ejecutar migración a PostgreSQL
+    console.log("\n🔄 PASO 3: Ejecutando migración a PostgreSQL...\n");
+    logger.info("PASO 3: Iniciando migración a PostgreSQL");
 
-    await runOptimizedPrismaMigration();
-    logger.info("Migración optimizada a PostgreSQL completada");
+    const { default: runPrismaMigration } = await import(
+      "../migrations/final-prisma-migration.js"
+    );
+    await runPrismaMigration();
+    logger.info("Migración a PostgreSQL completada");
 
     // PASO 4: Procesar archivos binarios
     console.log("\n📁 PASO 4: Procesando archivos binarios...\n");
