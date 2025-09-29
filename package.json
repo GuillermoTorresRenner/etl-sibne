@@ -1,6 +1,6 @@
 {
   "name": "etl-sibne",
-  "version": "1.2.0",
+  "version": "1.0.0",
   "description": "An ETL Software for migrations SIBNES's Databases",
   "main": "src/index.js",
   "type": "module",
@@ -9,6 +9,7 @@
     "reset": "node src/scripts/reset.js",
     "extract-files": "node src/processors/extract-archivo-adjunto.js",
     "generate-report": "node src/scripts/generate-migration-report.js",
+    "generate-csv": "node src/scripts/generate-csv.js",
     "compare-db": "node src/scripts/compare-databases.js",
     "test-connections": "node src/scripts/test-conexion.js conexion"
   },
